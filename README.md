@@ -2,8 +2,6 @@
 
 **A Top-Down 2D Sci-Fi Escape Puzzle Game**
 
-![Game Banner](https://via.placeholder.com/800x400/1a2634/00ffcc?text=Lab+Experience+Escape)
-
 ## Giới thiệu
 
 **Lab Experience Escape** là game phiêu lưu giải đố góc nhìn từ trên xuống (top-down) lấy bối cảnh năm 2026.
