@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 3
+  tags: []
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Water
+    uniqueID: 2772715573
+    locked: 0
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: "Bi\u0300nh thu\u0309y sinh"
+    uniqueID: 2892227725
+    locked: 0
+  - name: "Khung xung quanh n\u01B0\u01A1\u0301c"
+    uniqueID: 1156297081
+    locked: 0
+  - name: animation map 1
+    uniqueID: 2705720121
+    locked: 0
+  - name: door
+    uniqueID: 3437087411
+    locked: 0
+  - name: "v\xE2\u0323t thi\u0301 nghi\xEA\u0323m"
+    uniqueID: 531147965
+    locked: 0
+  m_RenderingLayers:
+  - Default
