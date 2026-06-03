@@ -38,6 +38,7 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+<<<<<<< HEAD
   - name: Water
     uniqueID: 2772715573
     locked: 0
@@ -61,3 +62,11 @@ TagManager:
     locked: 0
   m_RenderingLayers:
   - Default
+=======
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  m_RenderingLayers:
+  - Default
+  m_MigratedRenderPipelines: []
+>>>>>>> origin/anhhuy
