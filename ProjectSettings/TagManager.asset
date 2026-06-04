@@ -44,20 +44,29 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: wall
+    uniqueID: 456878725
+    locked: 0
   - name: "Bi\u0300nh thu\u0309y sinh"
     uniqueID: 2892227725
     locked: 0
   - name: "Khung xung quanh n\u01B0\u01A1\u0301c"
     uniqueID: 1156297081
     locked: 0
-  - name: animation map 1
-    uniqueID: 2705720121
-    locked: 0
-  - name: door
-    uniqueID: 3437087411
-    locked: 0
   - name: "v\xE2\u0323t thi\u0301 nghi\xEA\u0323m"
     uniqueID: 531147965
+    locked: 0
+  - name: Quai1_normal
+    uniqueID: 2705720121
+    locked: 0
+  - name: Quai1_left
+    uniqueID: 3437087411
+    locked: 0
+  - name: Quai1_right
+    uniqueID: 1346678637
+    locked: 0
+  - name: Quai1_back
+    uniqueID: 319545785
     locked: 0
   m_RenderingLayers:
   - Default
