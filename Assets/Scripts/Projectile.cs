@@ -1,9 +1,17 @@
 using UnityEngine;
 
+public enum PotionType { Fire, Lightning }
+
 public class Projectile : MonoBehaviour
 {
-    [Header("Chỉ số")]
-    public float damage   = 25f;
+    [Header("Loại bình")]
+    public PotionType potionType = PotionType.Fire;
+
+    [Header("Hiệu ứng khi trúng quái")]
+    [Tooltip("Kéo Prefab FireEffect hoặc LightningEffect vào đây")]
+    public GameObject hitEffectPrefab;
+
+    [Header("Tầm bay")]
     public float maxRange = 18f;
 
     Rigidbody2D rb;
@@ -23,25 +31,30 @@ public class Projectile : MonoBehaviour
 
     void Update()
     {
-        // Tự hủy khi bay quá tầm
         if (Vector2.Distance(transform.position, startPos) >= maxRange)
             Destroy(gameObject);
     }
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        // Bỏ qua chính Player
         if (other.CompareTag("Player")) return;
-
-        // Bỏ qua các trigger khác (ví dụ: trigger zone)
         if (other.isTrigger) return;
 
-        // Kiểm tra có phải quái không (tìm EnemyHealth trên root)
         var enemy = other.GetComponentInParent<EnemyHealth>();
         if (enemy != null && !enemy.IsDead)
-            enemy.TakeDamage(damage);
+        {
+            // Sát thương theo % máu tối đa của quái
+            float dmg = potionType == PotionType.Lightning
+                ? enemy.maxHealth * 0.5f    // điện: 50% max HP
+                : enemy.maxHealth * 0.25f;  // lửa:  25% max HP
 
-        // Hủy projectile dù trúng quái hay tường
+            enemy.TakeDamage(dmg);
+
+            // Spawn hiệu ứng tại vị trí quái
+            if (hitEffectPrefab != null)
+                Instantiate(hitEffectPrefab, enemy.transform.position, Quaternion.identity);
+        }
+
         Destroy(gameObject);
     }
 }
