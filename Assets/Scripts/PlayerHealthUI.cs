@@ -50,28 +50,14 @@ public class PlayerHealthUI : MonoBehaviour
         bgGo.transform.SetParent(canvasGo.transform, false);
 
         var bgRect = bgGo.AddComponent<RectTransform>();
-        bgRect.anchorMin = new Vector2(0f, 1f);   // góc trên trái
-        bgRect.anchorMax = new Vector2(0f, 1f);
-        bgRect.pivot     = new Vector2(0f, 1f);
+        bgRect.anchorMin        = new Vector2(0f, 1f);
+        bgRect.anchorMax        = new Vector2(0f, 1f);
+        bgRect.pivot            = new Vector2(0f, 1f);
         bgRect.anchoredPosition = position;
-        bgRect.sizeDelta = size;
+        bgRect.sizeDelta        = size;
 
         var bgImg = bgGo.AddComponent<Image>();
         bgImg.color = backgroundColor;
-
-        // ── Viền mỏng bên ngoài ───────────────────────────────────────────
-        var borderGo = new GameObject("HP_Border");
-        borderGo.transform.SetParent(bgGo.transform, false);
-
-        var borderRect = borderGo.AddComponent<RectTransform>();
-        borderRect.anchorMin  = Vector2.zero;
-        borderRect.anchorMax  = Vector2.one;
-        borderRect.offsetMin  = new Vector2(-2f, -2f);
-        borderRect.offsetMax  = new Vector2( 2f,  2f);
-
-        var borderImg = borderGo.AddComponent<Image>();
-        borderImg.color = new Color(1f, 1f, 1f, 0.25f);
-        borderGo.transform.SetAsFirstSibling(); // vẽ sau cùng (dưới fill)
 
         // ── Fill (thanh máu) ───────────────────────────────────────────────
         var fillGo = new GameObject("HP_Fill");
@@ -80,7 +66,7 @@ public class PlayerHealthUI : MonoBehaviour
         var fillRect = fillGo.AddComponent<RectTransform>();
         fillRect.anchorMin = Vector2.zero;
         fillRect.anchorMax = Vector2.one;
-        fillRect.offsetMin = new Vector2(2f, 2f);
+        fillRect.offsetMin = new Vector2(2f,  2f);
         fillRect.offsetMax = new Vector2(-2f, -2f);
 
         fillImage = fillGo.AddComponent<Image>();
@@ -89,24 +75,6 @@ public class PlayerHealthUI : MonoBehaviour
         fillImage.fillMethod = Image.FillMethod.Horizontal;
         fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
         fillImage.fillAmount = 1f;
-
-        // ── Label "HP" ─────────────────────────────────────────────────────
-        var labelGo = new GameObject("HP_Label");
-        labelGo.transform.SetParent(bgGo.transform, false);
-
-        var labelRect = labelGo.AddComponent<RectTransform>();
-        labelRect.anchorMin = Vector2.zero;
-        labelRect.anchorMax = Vector2.one;
-        labelRect.offsetMin = Vector2.zero;
-        labelRect.offsetMax = Vector2.zero;
-
-        var labelText = labelGo.AddComponent<Text>();
-        labelText.text      = "HP";
-        labelText.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        labelText.fontSize  = 13;
-        labelText.fontStyle = FontStyle.Bold;
-        labelText.color     = new Color(1f, 1f, 1f, 0.9f);
-        labelText.alignment = TextAnchor.MiddleCenter;
     }
 
     void Update()
