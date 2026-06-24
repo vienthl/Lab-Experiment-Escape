@@ -1,0 +1,209 @@
+﻿using System.Collections;
+using UnityEngine;
+
+public class PlayerMovement : MonoBehaviour
+{
+    public float moveSpeed = 3f;
+
+    // DRINK
+    public float drinkDuration = 0.8f;
+
+    // PICKUP
+    public float pickUpDuration = 0.8f;
+
+    // THROW
+    public float throwDuration = 0.5f;
+
+    private Rigidbody2D rb;
+    private Animator animator;
+    private Vector2 movement;
+    private Vector2 lastMoveDirection = Vector2.down;
+
+    // ACTION STATE
+    private bool isDrinking = false;
+
+    // PICKUP
+    private bool isPickingUp = false;
+
+    // THROW
+    private bool isThrowing = false;
+
+    // DEATH
+    private bool isDead = false;
+
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+    }
+
+    void Update()
+    {
+        // DEATH
+        // Nếu đã chết thì không cho nhập gì nữa
+        if (isDead)
+        {
+            movement = Vector2.zero;
+
+            animator.SetFloat("MoveX", 0);
+            animator.SetFloat("MoveY", 0);
+            animator.SetFloat("Speed", 0);
+
+            return;
+        }
+
+        // ACTION LOCK
+        // Nếu đang uống nước hoặc nhặt đồ thì không cho nhập di chuyển
+        // Lưu ý: KHÔNG có isThrowing ở đây, vì ném vẫn được di chuyển
+        if (isDrinking || isPickingUp)
+        {
+            movement = Vector2.zero;
+
+            animator.SetFloat("MoveX", 0);
+            animator.SetFloat("MoveY", 0);
+            animator.SetFloat("Speed", 0);
+
+            animator.SetFloat("LastMoveX", lastMoveDirection.x);
+            animator.SetFloat("LastMoveY", lastMoveDirection.y);
+
+            return;
+        }
+
+        // MOVEMENT INPUT
+        movement.x = Input.GetAxisRaw("Horizontal");
+        movement.y = Input.GetAxisRaw("Vertical");
+
+        movement = movement.normalized;
+
+        if (movement != Vector2.zero)
+        {
+            lastMoveDirection = movement;
+        }
+
+        // ANIMATOR PARAMETERS
+        animator.SetFloat("MoveX", movement.x);
+        animator.SetFloat("MoveY", movement.y);
+        animator.SetFloat("Speed", movement.sqrMagnitude);
+        animator.SetFloat("LastMoveX", lastMoveDirection.x);
+        animator.SetFloat("LastMoveY", lastMoveDirection.y);
+
+        // DRINK
+        // Bấm E để uống nước
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            StartCoroutine(DrinkRoutine());
+        }
+
+        // PICKUP
+        // Bấm R để nhặt đồ
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            StartCoroutine(PickUpRoutine());
+        }
+
+        // THROW
+        // Bấm J để ném, vẫn cho di chuyển trong lúc ném
+        if (Input.GetKeyDown(KeyCode.J) && !isThrowing)
+        {
+            StartCoroutine(ThrowRoutine());
+        }
+    }
+
+    void FixedUpdate()
+    {
+        // DEATH
+        // Khi chết thì đứng yên
+        if (isDead)
+        {
+            return;
+        }
+
+        // ACTION LOCK
+        // Khi đang uống nước hoặc nhặt đồ thì đứng yên
+        // Lưu ý: KHÔNG có isThrowing ở đây, vì ném vẫn được di chuyển
+        if (isDrinking || isPickingUp)
+        {
+            return;
+        }
+
+        rb.MovePosition(rb.position + movement * moveSpeed * Time.fixedDeltaTime);
+    }
+
+    // DEATH
+    public void Die()
+    {
+        if (isDead)
+        {
+            return;
+        }
+
+        isDead = true;
+        movement = Vector2.zero;
+
+        animator.SetFloat("Speed", 0);
+        animator.SetFloat("MoveX", 0);
+        animator.SetFloat("MoveY", 0);
+        animator.SetFloat("LastMoveX", lastMoveDirection.x);
+        animator.SetFloat("LastMoveY", lastMoveDirection.y);
+
+        animator.SetTrigger("Die");
+    }
+
+    // DRINK
+    IEnumerator DrinkRoutine()
+    {
+        isDrinking = true;
+
+        movement = Vector2.zero;
+
+        animator.SetFloat("Speed", 0);
+        animator.SetFloat("MoveX", 0);
+        animator.SetFloat("MoveY", 0);
+        animator.SetFloat("LastMoveX", lastMoveDirection.x);
+        animator.SetFloat("LastMoveY", lastMoveDirection.y);
+
+        animator.SetTrigger("Drink");
+
+        yield return new WaitForSeconds(drinkDuration);
+
+        isDrinking = false;
+    }
+
+    // PICKUP
+    IEnumerator PickUpRoutine()
+    {
+        isPickingUp = true;
+
+        movement = Vector2.zero;
+
+        animator.SetFloat("Speed", 0);
+        animator.SetFloat("MoveX", 0);
+        animator.SetFloat("MoveY", 0);
+        animator.SetFloat("LastMoveX", lastMoveDirection.x);
+        animator.SetFloat("LastMoveY", lastMoveDirection.y);
+
+        animator.SetTrigger("PickUp");
+
+        yield return new WaitForSeconds(pickUpDuration);
+
+        isPickingUp = false;
+    }
+
+    // THROW
+    IEnumerator ThrowRoutine()
+    {
+        isThrowing = true;
+
+        // Không set movement = zero ở đây
+        // Vì ném vẫn được phép di chuyển
+
+        animator.SetFloat("LastMoveX", lastMoveDirection.x);
+        animator.SetFloat("LastMoveY", lastMoveDirection.y);
+
+        animator.SetTrigger("Throw");
+
+        yield return new WaitForSeconds(throwDuration);
+
+        isThrowing = false;
+    }
+}
