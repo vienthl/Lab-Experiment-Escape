@@ -51,12 +51,12 @@ public class Projectile : MonoBehaviour
                 : enemy.maxHealth * 0.25f;  // lửa:  25% max HP
 
             enemy.TakeDamage(dmg);
-
-            if (hitEffectPrefab != null)
-                Instantiate(hitEffectPrefab, enemy.transform.position, Quaternion.identity);
         }
 
-        // Bể bình khi trúng quái hoặc tường — kể cả trigger lẫn solid collider
+        // Hiệu ứng tại điểm va chạm — cả khi trúng tường lẫn quái
+        if (hitEffectPrefab != null)
+            Instantiate(hitEffectPrefab, transform.position, Quaternion.identity);
+
         Destroy(gameObject);
     }
 }
