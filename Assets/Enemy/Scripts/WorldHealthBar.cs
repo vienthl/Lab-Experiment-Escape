@@ -6,9 +6,9 @@ using UnityEngine;
 public class WorldHealthBar : MonoBehaviour
 {
     [Header("Kích thước & vị trí")]
-    public Vector3 localOffset = new Vector3(0f, 0.75f, 0f);
-    public float barWidth = 0.7f;
-    public float barHeight = 0.08f;
+    public Vector3 localOffset = new Vector3(0f, 1.4f, 0f);
+    public float barWidth  = 1.5f;
+    public float barHeight = 0.14f;
 
     [Header("Màu sắc")]
     public Color backgroundColor = new Color(0.15f, 0.15f, 0.15f, 0.9f);

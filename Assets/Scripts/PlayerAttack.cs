@@ -10,7 +10,12 @@ public class PlayerAttack : MonoBehaviour
 
     [Header("Cài đặt ném")]
     public float projectileSpeed = 14f;
-    public float spawnOffset     = 0.6f;
+
+    [Tooltip("Khoảng cách spawn tính từ tâm player (phải > half-size collider player)")]
+    public float spawnOffset = 1.8f;
+
+    [Tooltip("Scale bình khi spawn — chỉnh cho khớp kích thước nhân vật")]
+    public float projectileScale = 0.35f;
 
     PlayerMovement movement;
     PlayerHealth   health;
@@ -34,7 +39,10 @@ public class PlayerAttack : MonoBehaviour
 
     void Throw(GameObject prefab)
     {
-        Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        // Đặt z = khoảng cách camera → world plane để ScreenToWorldPoint cho đúng tọa độ
+        Vector3 mouseScreenPos = Input.mousePosition;
+        mouseScreenPos.z = -Camera.main.transform.position.z;
+        Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(mouseScreenPos);
         mouseWorld.z = 0f;
 
         Vector2 dir = ((Vector2)mouseWorld - (Vector2)transform.position).normalized;
@@ -45,8 +53,11 @@ public class PlayerAttack : MonoBehaviour
 
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         var go = Instantiate(prefab, spawnPos, Quaternion.Euler(0f, 0f, angle));
-        go.GetComponent<Projectile>()?.Launch(dir, projectileSpeed);
 
+        // Scale bình vừa phải so với nhân vật
+        go.transform.localScale = Vector3.one * projectileScale;
+
+        go.GetComponent<Projectile>()?.Launch(dir, projectileSpeed);
         movement?.TriggerThrow();
     }
 }
