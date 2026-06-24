@@ -2,14 +2,14 @@
 
 public class CameraController : MonoBehaviour
 {
-    public float moveSpeed = 5f;
+    public Transform target;
+    public float smoothSpeed = 5f;
+    public Vector3 offset = new Vector3(0, 0, -10);
 
-    void Update()
+    void LateUpdate()
     {
-        float h = Input.GetAxis("Horizontal"); // A/D hoặc mũi tên
-        float v = Input.GetAxis("Vertical");   // W/S hoặc mũi tên
-
-        transform.Translate(h * moveSpeed * Time.deltaTime,
-                            v * moveSpeed * Time.deltaTime, 0);
+        if (target == null) return;
+        Vector3 desired = target.position + offset;
+        transform.position = Vector3.Lerp(transform.position, desired, smoothSpeed * Time.deltaTime);
     }
 }
