@@ -31,6 +31,10 @@ public class PlayerMovement : MonoBehaviour
     // DEATH
     private bool isDead = false;
 
+    public bool IsDead => isDead;
+    public bool IsThrowing => isThrowing;
+    public Vector2 LastMoveDirection => lastMoveDirection;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -94,18 +98,10 @@ public class PlayerMovement : MonoBehaviour
             StartCoroutine(DrinkRoutine());
         }
 
-        // PICKUP
-        // Bấm R để nhặt đồ
-        if (Input.GetKeyDown(KeyCode.R))
+        // PICKUP — bấm F để nhặt đồ
+        if (Input.GetKeyDown(KeyCode.F))
         {
             StartCoroutine(PickUpRoutine());
-        }
-
-        // THROW
-        // Bấm J để ném, vẫn cho di chuyển trong lúc ném
-        if (Input.GetKeyDown(KeyCode.J) && !isThrowing)
-        {
-            StartCoroutine(ThrowRoutine());
         }
     }
 
@@ -189,21 +185,20 @@ public class PlayerMovement : MonoBehaviour
         isPickingUp = false;
     }
 
-    // THROW
+    // THROW — gọi từ PlayerAttack khi bấm chuột trái
+    public void TriggerThrow()
+    {
+        if (!isThrowing && !isDead)
+            StartCoroutine(ThrowRoutine());
+    }
+
     IEnumerator ThrowRoutine()
     {
         isThrowing = true;
-
-        // Không set movement = zero ở đây
-        // Vì ném vẫn được phép di chuyển
-
         animator.SetFloat("LastMoveX", lastMoveDirection.x);
         animator.SetFloat("LastMoveY", lastMoveDirection.y);
-
         animator.SetTrigger("Throw");
-
         yield return new WaitForSeconds(throwDuration);
-
         isThrowing = false;
     }
 }
