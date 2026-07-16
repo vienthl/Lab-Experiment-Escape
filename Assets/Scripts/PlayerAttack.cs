@@ -68,7 +68,7 @@ public class PlayerAttack : MonoBehaviour
         go.transform.localScale = Vector3.one * projectileScale;
 
         go.GetComponent<Projectile>()?.Launch(dir, projectileSpeed);
-        movement?.TriggerThrow();
+        movement?.TriggerThrow(dir);
         lastThrowTime = Time.time;
     }
 }

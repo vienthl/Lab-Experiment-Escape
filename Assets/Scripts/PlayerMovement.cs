@@ -94,8 +94,14 @@ public class PlayerMovement : MonoBehaviour
         animator.SetFloat("MoveX", movement.x);
         animator.SetFloat("MoveY", movement.y);
         animator.SetFloat("Speed", movement.sqrMagnitude);
-        animator.SetFloat("LastMoveX", lastMoveDirection.x);
-        animator.SetFloat("LastMoveY", lastMoveDirection.y);
+
+        // Khi đang ném: GIỮ hướng mặt về phía ném (đã set ở TriggerThrow),
+        // không cho hướng di chuyển ghi đè → animation ném không đổi hướng giữa chừng
+        if (!isThrowing)
+        {
+            animator.SetFloat("LastMoveX", lastMoveDirection.x);
+            animator.SetFloat("LastMoveY", lastMoveDirection.y);
+        }
 
         // DRINK / PICKUP
         // Không cho uống/nhặt khi đang ném (tránh chồng animation)
@@ -213,10 +219,18 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // THROW — gọi từ PlayerAttack khi bấm chuột trái/phải
-    public void TriggerThrow()
+    // Overload cũ: ném theo hướng đi cuối (giữ tương thích nếu nơi khác còn gọi)
+    public void TriggerThrow() => TriggerThrow(Vector2.zero);
+
+    // aimDir: hướng ném (hướng chuột) — quay mặt nhân vật về đúng phía ném
+    public void TriggerThrow(Vector2 aimDir)
     {
-        if (!isThrowing && !isDead && !IsBusy)
-            StartCoroutine(ThrowRoutine());
+        if (isThrowing || isDead || IsBusy) return;
+
+        if (aimDir != Vector2.zero)
+            lastMoveDirection = aimDir;
+
+        StartCoroutine(ThrowRoutine());
     }
 
     IEnumerator ThrowRoutine()
