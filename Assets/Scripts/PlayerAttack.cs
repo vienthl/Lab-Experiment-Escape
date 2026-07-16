@@ -11,14 +11,18 @@ public class PlayerAttack : MonoBehaviour
     [Header("Cài đặt ném")]
     public float projectileSpeed = 14f;
 
-    [Tooltip("Khoảng cách spawn tính từ tâm player (phải > half-size collider player)")]
-    public float spawnOffset = 1.8f;
+    [Tooltip("Thời gian chờ giữa 2 lần ném (giây)")]
+    public float throwCooldown = 0.5f;
+
+    [Tooltip("Khoảng cách spawn tính từ tâm player — nhỏ để đánh được quái áp sát")]
+    public float spawnOffset = 0.4f;
 
     [Tooltip("Scale bình khi spawn — chỉnh cho khớp kích thước nhân vật")]
     public float projectileScale = 0.35f;
 
     PlayerMovement movement;
     PlayerHealth   health;
+    float lastThrowTime = -999f;
 
     void Awake()
     {
@@ -30,15 +34,23 @@ public class PlayerAttack : MonoBehaviour
     {
         if (health != null && health.IsDead) return;
 
+        // Không ném khi đang uống nước / nhặt đồ
+        if (movement != null && movement.IsBusy) return;
+
+        // Cooldown giữa 2 lần ném
+        if (Time.time - lastThrowTime < throwCooldown) return;
+
+        // else if: bấm 2 chuột cùng frame thì chỉ ném bình lửa
         if (Input.GetMouseButtonDown(0) && firePotionPrefab != null)
             Throw(firePotionPrefab);
-
-        if (Input.GetMouseButtonDown(1) && lightningPotionPrefab != null)
+        else if (Input.GetMouseButtonDown(1) && lightningPotionPrefab != null)
             Throw(lightningPotionPrefab);
     }
 
     void Throw(GameObject prefab)
     {
+        if (Camera.main == null) return;
+
         Vector3 mouseScreenPos = Input.mousePosition;
         mouseScreenPos.z = -Camera.main.transform.position.z;
         Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(mouseScreenPos);
@@ -57,5 +69,6 @@ public class PlayerAttack : MonoBehaviour
 
         go.GetComponent<Projectile>()?.Launch(dir, projectileSpeed);
         movement?.TriggerThrow();
+        lastThrowTime = Time.time;
     }
 }

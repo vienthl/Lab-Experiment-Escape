@@ -40,6 +40,9 @@ public class Projectile : MonoBehaviour
         if (other.CompareTag("Player")) return;
         if (other.GetComponentInParent<HitEffect>() != null) return;
 
+        // 2 bình thuốc bay xuyên qua nhau, không tự hủy lẫn nhau
+        if (other.GetComponentInParent<Projectile>() != null) return;
+
         var enemy = other.GetComponentInParent<EnemyHealth>();
         if (enemy != null && !enemy.IsDead)
         {

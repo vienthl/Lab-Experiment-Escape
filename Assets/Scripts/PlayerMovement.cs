@@ -14,10 +14,15 @@ public class PlayerMovement : MonoBehaviour
     // THROW
     public float throwDuration = 0.5f;
 
+    // KNOCKBACK
+    [Tooltip("Tốc độ tắt dần của lực đẩy lùi (đơn vị/giây)")]
+    public float knockbackDecay = 25f;
+
     private Rigidbody2D rb;
     private Animator animator;
     private Vector2 movement;
     private Vector2 lastMoveDirection = Vector2.down;
+    private Vector2 knockbackVelocity;
 
     // ACTION STATE
     private bool isDrinking = false;
@@ -33,6 +38,7 @@ public class PlayerMovement : MonoBehaviour
 
     public bool IsDead => isDead;
     public bool IsThrowing => isThrowing;
+    public bool IsBusy => isDrinking || isPickingUp;
     public Vector2 LastMoveDirection => lastMoveDirection;
 
     void Awake()
@@ -91,38 +97,57 @@ public class PlayerMovement : MonoBehaviour
         animator.SetFloat("LastMoveX", lastMoveDirection.x);
         animator.SetFloat("LastMoveY", lastMoveDirection.y);
 
-        // DRINK
-        // Bấm E để uống nước
-        if (Input.GetKeyDown(KeyCode.E))
+        // DRINK / PICKUP
+        // Không cho uống/nhặt khi đang ném (tránh chồng animation)
+        // E và F bấm cùng frame thì ưu tiên E (else if)
+        if (!isThrowing)
         {
-            StartCoroutine(DrinkRoutine());
-        }
-
-        // PICKUP — bấm F để nhặt đồ
-        if (Input.GetKeyDown(KeyCode.F))
-        {
-            StartCoroutine(PickUpRoutine());
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                StartCoroutine(DrinkRoutine());
+            }
+            else if (Input.GetKeyDown(KeyCode.F))
+            {
+                StartCoroutine(PickUpRoutine());
+            }
         }
     }
 
     void FixedUpdate()
     {
         // DEATH
-        // Khi chết thì đứng yên
+        // Khi chết thì đứng yên tuyệt đối, không bị đẩy trôi
+        if (isDead)
+        {
+            knockbackVelocity = Vector2.zero;
+            rb.linearVelocity = Vector2.zero;
+            return;
+        }
+
+        // ACTION LOCK
+        // Khi đang uống nước hoặc nhặt đồ thì không tự di chuyển,
+        // nhưng vẫn nhận knockback khi bị đánh
+        // Lưu ý: KHÔNG có isThrowing ở đây, vì ném vẫn được di chuyển
+        Vector2 moveVelocity = (isDrinking || isPickingUp)
+            ? Vector2.zero
+            : movement * moveSpeed;
+
+        rb.linearVelocity = moveVelocity + knockbackVelocity;
+
+        knockbackVelocity = Vector2.MoveTowards(
+            knockbackVelocity, Vector2.zero, knockbackDecay * Time.fixedDeltaTime);
+    }
+
+    // KNOCKBACK — gọi từ PlayerHealth khi trúng đòn
+    // Set trực tiếp (không cộng dồn) để bị đánh liên tiếp không văng quá xa
+    public void ApplyKnockback(Vector2 velocity)
+    {
         if (isDead)
         {
             return;
         }
 
-        // ACTION LOCK
-        // Khi đang uống nước hoặc nhặt đồ thì đứng yên
-        // Lưu ý: KHÔNG có isThrowing ở đây, vì ném vẫn được di chuyển
-        if (isDrinking || isPickingUp)
-        {
-            return;
-        }
-
-        rb.MovePosition(rb.position + movement * moveSpeed * Time.fixedDeltaTime);
+        knockbackVelocity = velocity;
     }
 
     // DEATH
@@ -135,6 +160,8 @@ public class PlayerMovement : MonoBehaviour
 
         isDead = true;
         movement = Vector2.zero;
+        knockbackVelocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
 
         animator.SetFloat("Speed", 0);
         animator.SetFloat("MoveX", 0);
@@ -185,10 +212,10 @@ public class PlayerMovement : MonoBehaviour
         isPickingUp = false;
     }
 
-    // THROW — gọi từ PlayerAttack khi bấm chuột trái
+    // THROW — gọi từ PlayerAttack khi bấm chuột trái/phải
     public void TriggerThrow()
     {
-        if (!isThrowing && !isDead)
+        if (!isThrowing && !isDead && !IsBusy)
             StartCoroutine(ThrowRoutine());
     }
 

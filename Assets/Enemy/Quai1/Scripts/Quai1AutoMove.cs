@@ -34,8 +34,24 @@ public class Quai1AutoMove : MonoBehaviour
     [Tooltip("Độ dài tia kiểm tra phía trước — càng lớn càng phát hiện tường sớm hơn")]
     public float wallCheckDistance = 0.4f;
 
+    [Header("Đuổi theo player")]
+    [Tooltip("Player vào trong bán kính này (và không bị tường che) thì quái đuổi theo")]
+    public float detectRange = 4f;
+
+    [Tooltip("Player chạy xa hơn khoảng này thì quái bỏ cuộc — nên > detectRange để tránh nhấp nháy trạng thái")]
+    public float loseRange = 5.5f;
+
+    [Tooltip("Tốc độ khi đang đuổi")]
+    public float chaseSpeed = 2.5f;
+
+    [Tooltip("Bao lâu tính lại hướng đuổi một lần — chống giật hướng khi player ở đường chéo")]
+    public float chaseRepathInterval = 0.2f;
+
+    [Tooltip("Đứng lại bao lâu sau khi cắn trúng player (giây)")]
+    public float attackPauseDuration = 0.35f;
+
     [Header("Máu")]
-    [Tooltip("Tự tạo thanh máu phía trên đầu quái")]
+    [Tooltip("Hiện thanh máu phía trên đầu quái (tắt thì quái VẪN có máu, chỉ ẩn thanh)")]
     public bool showHealthBar = true;
     public float maxHealth = 100f;
 
@@ -43,6 +59,13 @@ public class Quai1AutoMove : MonoBehaviour
     private Collider2D bodyCollider;
     private Direction currentDirection; // hướng đang đi hiện tại
     private float directionTimer;       // đếm thời gian để đổi hướng định kỳ
+
+    private Transform playerTransform;  // cache player để đuổi theo
+    private PlayerHealth playerHealth;  // để ngừng đuổi khi player chết
+    private bool isChasing;             // đang đuổi player hay đi lang thang
+    private bool isStuck;               // bị kẹt cả 4 hướng → đứng yên
+    private float repathTimer;          // đếm nhịp tính lại hướng đuổi
+    private float attackPauseTimer;     // đứng lại sau khi cắn player
 
     // ── Khởi tạo ──────────────────────────────────────────────────────────
 
@@ -56,6 +79,7 @@ public class Quai1AutoMove : MonoBehaviour
         rb.gravityScale = 0f;                                          // top-down: không rơi
         rb.freezeRotation = true;                                      // không bị xoay khi va chạm
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous; // tránh xuyên tường khi đi nhanh
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate;       // mượt trên màn hình tần số cao
 
         bodyCollider = GetComponent<Collider2D>();
         ResolveDirectionSprites(); // tự tìm 4 child sprite nếu chưa kéo thả trong Inspector
@@ -64,18 +88,25 @@ public class Quai1AutoMove : MonoBehaviour
 
     void EnsureHealthComponent()
     {
-        if (!showHealthBar)
-            return;
-
+        // LUÔN gắn máu cho quái — showHealthBar chỉ quyết định hiển thị thanh máu
         var health = GetComponent<EnemyHealth>();
         if (health == null)
             health = gameObject.AddComponent<EnemyHealth>();
 
+        health.showBar = showHealthBar;
         health.Configure(maxHealth);
     }
 
     void Start()
     {
+        // Cache player để đuổi theo — không tìm thấy thì quái chỉ đi lang thang
+        var playerGo = GameObject.FindGameObjectWithTag("Player");
+        if (playerGo != null)
+        {
+            playerTransform = playerGo.transform;
+            playerHealth = playerGo.GetComponent<PlayerHealth>();
+        }
+
         PickValidDirection(); // chọn hướng ban đầu (hướng nào không bị tường chặn)
         UpdateSprite();       // bật đúng sprite theo hướng
     }
@@ -84,33 +115,152 @@ public class Quai1AutoMove : MonoBehaviour
 
     void Update()
     {
-        // Đếm thời gian → đến lúc thì thử đổi hướng ngẫu nhiên
-        directionTimer += Time.deltaTime;
-        if (directionTimer >= changeDirectionInterval)
+        // Vừa cắn player → đứng lại một nhịp (player kịp bị đẩy ra + i-frame)
+        if (attackPauseTimer > 0f)
         {
-            PickValidDirection();
-            directionTimer = 0f;
+            attackPauseTimer -= Time.deltaTime;
+            UpdateSprite();
+            return;
         }
 
-        // Mỗi frame kiểm tra: hướng hiện tại còn đi được không?
-        // (phát hiện tường TRƯỚC khi va chạm thật sự xảy ra)
-        if (IsBlocked(currentDirection))
-            PickValidDirection();
+        UpdateChaseState();
+
+        if (isChasing)
+        {
+            // Tính lại hướng đuổi theo nhịp — chống giật hướng khi |dx| ≈ |dy|
+            repathTimer -= Time.deltaTime;
+            if (repathTimer <= 0f || IsBlocked(currentDirection))
+            {
+                PickChaseDirection();
+                repathTimer = chaseRepathInterval;
+            }
+        }
+        else
+        {
+            // WANDER: đếm thời gian → đến lúc thì thử đổi hướng ngẫu nhiên
+            directionTimer += Time.deltaTime;
+            if (directionTimer >= changeDirectionInterval)
+            {
+                PickValidDirection();
+                directionTimer = 0f;
+            }
+
+            // Mỗi frame kiểm tra: hướng hiện tại còn đi được không?
+            // (phát hiện tường TRƯỚC khi va chạm thật sự xảy ra)
+            if (IsBlocked(currentDirection))
+                PickValidDirection();
+        }
 
         UpdateSprite();
     }
 
     void FixedUpdate()
     {
+        // Kẹt 4 phía hoặc đang đứng lại sau khi cắn → đứng yên thật sự
+        if (isStuck || attackPauseTimer > 0f)
+        {
+            rb.linearVelocity = Vector2.zero;
+            return;
+        }
+
         // FixedUpdate chạy theo nhịp vật lý (50 lần/giây) — di chuyển mượt và ổn định
-        rb.linearVelocity = DirectionToVector(currentDirection) * moveSpeed;
+        float speed = isChasing ? chaseSpeed : moveSpeed;
+        rb.linearVelocity = DirectionToVector(currentDirection) * speed;
     }
 
-    // Unity gọi khi collider của quái CHẠM collider khác (tường, quái khác...)
+    // Unity gọi khi collider của quái CHẠM collider khác (player, tường, quái khác...)
     void OnCollisionEnter2D(Collision2D collision)
     {
+        // Chạm player → đứng lại một nhịp thay vì nghiến liên tục vào người
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            attackPauseTimer = attackPauseDuration;
+            return;
+        }
+
         PickValidDirection(); // va chạm thật → đổi hướng ngay
         directionTimer = 0f;
+    }
+
+    // ── Đuổi theo player ──────────────────────────────────────────────────
+
+    void UpdateChaseState()
+    {
+        // Không có player hoặc player đã chết → quay về lang thang
+        if (playerTransform == null || (playerHealth != null && playerHealth.IsDead))
+        {
+            StopChasing();
+            return;
+        }
+
+        float dist = Vector2.Distance(transform.position, playerTransform.position);
+
+        if (!isChasing)
+        {
+            // Vào tầm + nhìn thấy (không bị tường che) → bắt đầu đuổi
+            if (dist <= detectRange && HasLineOfSightToPlayer())
+            {
+                isChasing = true;
+                repathTimer = 0f; // tính hướng ngay frame này
+            }
+        }
+        else
+        {
+            // Ra khỏi tầm hoặc mất tầm nhìn → bỏ cuộc
+            if (dist > loseRange || !HasLineOfSightToPlayer())
+                StopChasing();
+        }
+    }
+
+    void StopChasing()
+    {
+        if (!isChasing)
+            return;
+
+        isChasing = false;
+        directionTimer = 0f;
+        PickValidDirection();
+    }
+
+    // Có nhìn thấy player không — tia từ quái đến player không vướng tường
+    bool HasLineOfSightToPlayer()
+    {
+        Vector2 origin = transform.position;
+        Vector2 toPlayer = (Vector2)playerTransform.position - origin;
+
+        RaycastHit2D hit = Physics2D.Raycast(origin, toPlayer.normalized, toPlayer.magnitude, wallLayer);
+        return hit.collider == null;
+    }
+
+    // Chọn hướng đuổi 4 hướng: ưu tiên trục có khoảng cách lớn hơn,
+    // bị chặn thì thử trục còn lại, cả 2 bị chặn thì lách như wander
+    void PickChaseDirection()
+    {
+        Vector2 delta = playerTransform.position - transform.position;
+        bool horizontalFirst = Mathf.Abs(delta.x) >= Mathf.Abs(delta.y);
+
+        Direction primary = horizontalFirst
+            ? (delta.x >= 0f ? Direction.Right : Direction.Left)
+            : (delta.y >= 0f ? Direction.Up : Direction.Down);
+
+        Direction secondary = horizontalFirst
+            ? (delta.y >= 0f ? Direction.Up : Direction.Down)
+            : (delta.x >= 0f ? Direction.Right : Direction.Left);
+
+        if (!IsBlocked(primary))
+        {
+            currentDirection = primary;
+            isStuck = false;
+        }
+        else if (!IsBlocked(secondary))
+        {
+            currentDirection = secondary;
+            isStuck = false;
+        }
+        else
+        {
+            PickValidDirection();
+        }
     }
 
     // ── Sprite 4 hướng ────────────────────────────────────────────────────
@@ -171,12 +321,14 @@ public class Quai1AutoMove : MonoBehaviour
             if (!IsBlocked(dir))
             {
                 currentDirection = dir;
+                isStuck = false;
                 return;
             }
         }
 
-        // Bị kẹt 4 phía → dừng lại
-        rb.linearVelocity = Vector2.zero;
+        // Bị kẹt 4 phía → FixedUpdate giữ quái đứng yên,
+        // directionTimer vẫn chạy nên sẽ tự thử lại sau changeDirectionInterval
+        isStuck = true;
     }
 
     // ── Phát hiện vật cản (RAYCAST) ───────────────────────────────────────

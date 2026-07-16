@@ -29,7 +29,7 @@ public class EnemyDamage : MonoBehaviour
         var playerHealth = other.GetComponent<PlayerHealth>();
         if (playerHealth == null || playerHealth.IsDead) return;
 
-        playerHealth.TakeDamage(damagePerHit);
+        playerHealth.TakeDamage(damagePerHit, transform.position);
         lastDamageTime = Time.time;
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class EnemyHealth : MonoBehaviour
@@ -6,8 +7,15 @@ public class EnemyHealth : MonoBehaviour
     [Header("Máu")]
     public float maxHealth = 100f;
 
+    [Tooltip("Hiện thanh máu phía trên đầu (tắt thì quái vẫn có máu bình thường)")]
+    public bool showBar = true;
+
     [Tooltip("Ẩn thanh máu khi còn đủ máu (100%)")]
     public bool hideBarWhenFull = false;
+
+    [Header("Chết")]
+    [Tooltip("Thời gian mờ dần rồi biến mất (giây)")]
+    public float deathFadeDuration = 0.25f;
 
     float currentHealth;
     WorldHealthBar healthBar;
@@ -22,8 +30,17 @@ public class EnemyHealth : MonoBehaviour
     void Awake()
     {
         currentHealth = maxHealth;
-        CreateHealthBar();
-        RefreshBar();
+    }
+
+    // Tạo thanh máu ở Start (không phải Awake) để Quai1AutoMove
+    // kịp set showBar sau khi AddComponent lúc runtime
+    void Start()
+    {
+        if (showBar)
+        {
+            CreateHealthBar();
+            RefreshBar();
+        }
     }
 
     public void Configure(float health)
@@ -78,11 +95,45 @@ public class EnemyHealth : MonoBehaviour
     {
         OnDied?.Invoke(this);
 
+        // Tắt ngay mọi hành vi: xác không đuổi, không cắn, không cản đường
         var move = GetComponent<Quai1AutoMove>();
         if (move != null) move.enabled = false;
 
+        var damage = GetComponent<EnemyDamage>();
+        if (damage != null) damage.enabled = false;
+
+        foreach (var col in GetComponentsInChildren<Collider2D>())
+            col.enabled = false;
+
         var rb = GetComponent<Rigidbody2D>();
         if (rb != null) rb.linearVelocity = Vector2.zero;
+
+        StartCoroutine(FadeOutAndDeactivate());
+    }
+
+    // Mờ dần toàn bộ sprite (kể cả thanh máu) rồi tắt object
+    IEnumerator FadeOutAndDeactivate()
+    {
+        var renderers   = GetComponentsInChildren<SpriteRenderer>();
+        var startColors = new Color[renderers.Length];
+        for (int i = 0; i < renderers.Length; i++)
+            startColors[i] = renderers[i].color;
+
+        float elapsed = 0f;
+        while (elapsed < deathFadeDuration)
+        {
+            elapsed += Time.deltaTime;
+            float alpha = Mathf.Clamp01(1f - elapsed / deathFadeDuration);
+
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] == null) continue;
+                var c = startColors[i];
+                renderers[i].color = new Color(c.r, c.g, c.b, c.a * alpha);
+            }
+
+            yield return null;
+        }
 
         gameObject.SetActive(false);
     }
