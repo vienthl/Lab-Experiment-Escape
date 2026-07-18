@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 130dc193be444834fb0ba872d26173c5
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - healthImage: {instanceID: 0}
+  - hp0: {fileID: 21300000, guid: 1c377f289be6dec4297605a3f3b61071, type: 3}
+  - hp16: {fileID: 21300000, guid: ec7ae8ef99a1e1947a9e6e080691b32b, type: 3}
+  - hp33: {fileID: 21300000, guid: 9d6391781ae10bf40b58c81b8e140179, type: 3}
+  - hp50: {fileID: 21300000, guid: 47a1ffcade1dec84e8cd7f081950e50c, type: 3}
+  - hp66: {fileID: 21300000, guid: 221add1d78130cc47abcc2a1d1e8d90e, type: 3}
+  - hp83: {fileID: 21300000, guid: 8dd4d57691b2a4541983c894c1417188, type: 3}
+  - hp100: {fileID: 21300000, guid: bfd7cd246cd069d47b467d8c23073dc8, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
