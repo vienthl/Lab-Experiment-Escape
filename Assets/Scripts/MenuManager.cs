@@ -24,8 +24,22 @@ public class MenuManager : MonoBehaviour
 
     private void Awake()
     {
+        CenterMenuBackground();
+
         if (optionsPanel != null)
         {
+            Transform settingsLayer = optionsPanel.transform.parent;
+            if (settingsLayer != null)
+            {
+                // The supplied options image already contains its own backdrop.
+                // This legacy image otherwise covers the neon menu after closing.
+                Transform legacyBackground = settingsLayer.Find("UI_Background");
+                if (legacyBackground != null)
+                {
+                    legacyBackground.gameObject.SetActive(false);
+                }
+            }
+
             optionsPanel.SetActive(false);
         }
     }
@@ -46,8 +60,50 @@ public class MenuManager : MonoBehaviour
     {
         if (optionsPanel != null)
         {
+            // The options artwork and controls live inside Settings_Panel. Bring
+            // that whole layer above the full-screen neon menu before opening it.
+            Transform settingsLayer = optionsPanel.transform.parent;
+            if (settingsLayer != null)
+            {
+                settingsLayer.SetAsLastSibling();
+            }
+
             optionsPanel.SetActive(true);
         }
+    }
+
+    private void CenterMenuBackground()
+    {
+        Canvas canvas = GetComponentInParent<Canvas>();
+        Transform background = canvas != null
+            ? canvas.transform.Find("NeonMenu/BlueNeonBackground")
+            : null;
+
+        if (background == null || !background.TryGetComponent(out Image backgroundImage))
+        {
+            return;
+        }
+
+        RectTransform backgroundRect = backgroundImage.rectTransform;
+        backgroundRect.anchorMin = new Vector2(0.5f, 0.5f);
+        backgroundRect.anchorMax = new Vector2(0.5f, 0.5f);
+        backgroundRect.pivot = new Vector2(0.5f, 0.5f);
+        backgroundRect.anchoredPosition = Vector2.zero;
+
+        AspectRatioFitter aspectFitter = background.GetComponent<AspectRatioFitter>();
+        if (aspectFitter == null)
+        {
+            aspectFitter = background.gameObject.AddComponent<AspectRatioFitter>();
+        }
+
+        aspectFitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+        if (backgroundImage.sprite != null)
+        {
+            Rect spriteRect = backgroundImage.sprite.rect;
+            aspectFitter.aspectRatio = spriteRect.width / spriteRect.height;
+        }
+
+        backgroundImage.preserveAspect = true;
     }
 
     public void CloseOptions()
@@ -57,6 +113,14 @@ public class MenuManager : MonoBehaviour
         if (optionsPanel != null)
         {
             optionsPanel.SetActive(false);
+
+            Transform settingsLayer = optionsPanel.transform.parent;
+            Transform canvasRoot = settingsLayer != null ? settingsLayer.parent : null;
+            Transform neonMenu = canvasRoot != null ? canvasRoot.Find("NeonMenu") : null;
+            if (neonMenu != null)
+            {
+                neonMenu.SetAsLastSibling();
+            }
         }
     }
 
