@@ -1,19 +1,16 @@
 using UnityEngine;
 
-/// <summary>
-/// Thanh máu hiển thị phía trên đầu quái (dùng SpriteRenderer, không cần Canvas UI).
-/// </summary>
 public class WorldHealthBar : MonoBehaviour
 {
     [Header("Kích thước & vị trí")]
-    public Vector3 localOffset = new Vector3(0f, 0.75f, 0f);
-    public float barWidth = 0.7f;
-    public float barHeight = 0.08f;
+    public Vector3 localOffset = new Vector3(0f, 1.4f, 0f);
+    public float barWidth  = 1.5f;
+    public float barHeight = 0.14f;
 
     [Header("Màu sắc")]
     public Color backgroundColor = new Color(0.15f, 0.15f, 0.15f, 0.9f);
-    public Color fullColor = new Color(0.2f, 0.85f, 0.25f, 1f);
-    public Color lowColor = new Color(0.9f, 0.2f, 0.15f, 1f);
+    public Color fullColor       = new Color(0.2f,  0.85f, 0.25f, 1f);
+    public Color lowColor        = new Color(0.9f,  0.2f,  0.15f, 1f);
     public float lowHealthThreshold = 0.3f;
 
     [Header("Hiển thị")]
@@ -25,19 +22,18 @@ public class WorldHealthBar : MonoBehaviour
 
     public void Build()
     {
-        if (fillTransform != null)
-            return;
+        if (fillTransform != null) return;
 
         whiteSprite ??= CreateWhiteSprite();
 
         var bgGo = new GameObject("Background");
         bgGo.transform.SetParent(transform, false);
         bgGo.transform.localPosition = localOffset;
-        bgGo.transform.localScale = new Vector3(barWidth, barHeight, 1f);
+        bgGo.transform.localScale    = new Vector3(barWidth, barHeight, 1f);
 
         var bgRenderer = bgGo.AddComponent<SpriteRenderer>();
         bgRenderer.sprite = whiteSprite;
-        bgRenderer.color = backgroundColor;
+        bgRenderer.color  = backgroundColor;
         bgRenderer.sortingOrder = sortingOrder;
 
         var fillGo = new GameObject("Fill");
@@ -45,13 +41,12 @@ public class WorldHealthBar : MonoBehaviour
 
         fillRenderer = fillGo.AddComponent<SpriteRenderer>();
         fillRenderer.sprite = whiteSprite;
-        fillRenderer.color = fullColor;
+        fillRenderer.color  = fullColor;
         fillRenderer.sortingOrder = sortingOrder + 1;
 
         ApplySortingFromEnemy(
             transform.parent?.GetComponentInChildren<SpriteRenderer>(true),
-            bgRenderer,
-            fillRenderer);
+            bgRenderer, fillRenderer);
 
         fillTransform = fillGo.transform;
         SetFill(1f);
@@ -59,19 +54,16 @@ public class WorldHealthBar : MonoBehaviour
 
     void ApplySortingFromEnemy(SpriteRenderer spriteRef, SpriteRenderer bg, SpriteRenderer fill)
     {
-        if (spriteRef == null)
-            return;
-
-        bg.sortingLayerID = spriteRef.sortingLayerID;
+        if (spriteRef == null) return;
+        bg.sortingLayerID   = spriteRef.sortingLayerID;
         fill.sortingLayerID = spriteRef.sortingLayerID;
-        bg.sortingOrder = spriteRef.sortingOrder + sortingOrder;
-        fill.sortingOrder = spriteRef.sortingOrder + sortingOrder + 1;
+        bg.sortingOrder     = spriteRef.sortingOrder + sortingOrder;
+        fill.sortingOrder   = spriteRef.sortingOrder + sortingOrder + 1;
     }
 
     public void SetFill(float normalized)
     {
-        if (fillTransform == null)
-            return;
+        if (fillTransform == null) return;
 
         normalized = Mathf.Clamp01(normalized);
 

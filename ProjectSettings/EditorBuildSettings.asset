@@ -4,6 +4,16 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/scene/IntroCinematic.unity
+    guid: b42bd04a4c304cc8ba8e90bd309e9776
+  - enabled: 1
+    path: Assets/scene/MainMenu.unity
+    guid: 0972b2afe81473f4cbf68eac5b4afeaa
+  - enabled: 1
+    path: Assets/scene/Level1.unity
+    guid: 7dab76623a0905442a0bd8410c30be58
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
+  m_UseUCBPForAssetBundles: 0
