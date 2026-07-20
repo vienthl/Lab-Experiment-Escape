@@ -20,6 +20,7 @@ public class PlayerMovement : MonoBehaviour
 
     private Rigidbody2D rb;
     private Animator animator;
+    private PlayerInteractor interactor;
     private Vector2 movement;
     private Vector2 lastMoveDirection = Vector2.down;
     private Vector2 knockbackVelocity;
@@ -45,6 +46,7 @@ public class PlayerMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        interactor = GetComponent<PlayerInteractor>();
     }
 
     void Update()
@@ -112,7 +114,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 StartCoroutine(DrinkRoutine());
             }
-            else if (Input.GetKeyDown(KeyCode.F))
+            else if (Input.GetKeyDown(KeyCode.F) && interactor != null && interactor.HasTarget)
             {
                 StartCoroutine(PickUpRoutine());
             }
@@ -214,6 +216,8 @@ public class PlayerMovement : MonoBehaviour
         animator.SetTrigger("PickUp");
 
         yield return new WaitForSeconds(pickUpDuration);
+
+        interactor?.Interact();
 
         isPickingUp = false;
     }

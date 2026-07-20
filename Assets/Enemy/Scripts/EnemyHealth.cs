@@ -17,6 +17,14 @@ public class EnemyHealth : MonoBehaviour
     [Tooltip("Thời gian mờ dần rồi biến mất (giây)")]
     public float deathFadeDuration = 0.25f;
 
+    [Header("Rơi đồ")]
+    [Tooltip("Prefab WorldItem sẽ Instantiate tại vị trí quái chết (để trống = không rơi gì)")]
+    public WorldItem lootPrefab;
+
+    [Range(0f, 1f)]
+    [Tooltip("Xác suất rơi đồ mỗi lần chết")]
+    public float dropChance = 0.3f;
+
     float currentHealth;
     WorldHealthBar healthBar;
 
@@ -94,6 +102,9 @@ public class EnemyHealth : MonoBehaviour
     void Die()
     {
         OnDied?.Invoke(this);
+
+        if (lootPrefab != null && UnityEngine.Random.value <= dropChance)
+            Instantiate(lootPrefab, transform.position, Quaternion.identity);
 
         // Tắt ngay mọi hành vi: xác không đuổi, không cắn, không cản đường
         var move = GetComponent<Quai1AutoMove>();

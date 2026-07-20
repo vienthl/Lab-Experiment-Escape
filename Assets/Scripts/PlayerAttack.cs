@@ -22,12 +22,14 @@ public class PlayerAttack : MonoBehaviour
 
     PlayerMovement movement;
     PlayerHealth   health;
+    PlayerInventory inventory;
     float lastThrowTime = -999f;
 
     void Awake()
     {
-        movement = GetComponent<PlayerMovement>();
-        health   = GetComponent<PlayerHealth>();
+        movement  = GetComponent<PlayerMovement>();
+        health    = GetComponent<PlayerHealth>();
+        inventory = GetComponent<PlayerInventory>();
     }
 
     void Update()
@@ -42,9 +44,22 @@ public class PlayerAttack : MonoBehaviour
 
         // else if: bấm 2 chuột cùng frame thì chỉ ném bình lửa
         if (Input.GetMouseButtonDown(0) && firePotionPrefab != null)
-            Throw(firePotionPrefab);
+            TryThrow(firePotionPrefab, ItemType.FirePotion);
         else if (Input.GetMouseButtonDown(1) && lightningPotionPrefab != null)
-            Throw(lightningPotionPrefab);
+            TryThrow(lightningPotionPrefab, ItemType.LightningPotion);
+    }
+
+    // Tiêu hao 1 bình trong inventory trước khi ném — hết bình thì không ném, không tốn cooldown.
+    // inventory == null (chưa gắn component) → fallback ném vô hạn như cũ, không chặn gameplay cũ.
+    void TryThrow(GameObject prefab, ItemType ammoType)
+    {
+        if (inventory != null && !inventory.TryConsume(ammoType, 1))
+        {
+            Debug.Log($"Hết bình {ammoType} — nhặt thêm trước khi ném tiếp.");
+            return;
+        }
+
+        Throw(prefab);
     }
 
     void Throw(GameObject prefab)

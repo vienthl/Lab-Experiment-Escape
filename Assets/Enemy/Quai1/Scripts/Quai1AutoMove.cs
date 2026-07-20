@@ -4,6 +4,7 @@ using UnityEngine;
 /// Quái tự di chuyển 4 hướng (lên / xuống / trái / phải),
 /// đổi hướng ngẫu nhiên theo thời gian hoặc khi gặp vật cản.
 /// </summary>
+[RequireComponent(typeof(EnemyHealth))]
 public class Quai1AutoMove : MonoBehaviour
 {
     public enum Direction { Up, Down, Left, Right }
@@ -14,18 +15,6 @@ public class Quai1AutoMove : MonoBehaviour
 
     [Tooltip("Sau bao nhiêu giây thì thử đổi hướng ngẫu nhiên")]
     public float changeDirectionInterval = 2f;
-
-    [Header("Tên child trong Hierarchy (tự tìm nếu để trống reference)")]
-    public string normalChildName = "Quai1_normal"; // sprite hướng xuống
-    public string leftChildName = "Quai1_left";
-    public string rightChildName = "Quai1_right";
-    public string backChildName = "Quai1_back";    // sprite hướng lên
-
-    [Header("Sprite theo hướng (tự gán nếu để trống)")]
-    public GameObject spriteNormal;
-    public GameObject spriteLeft;
-    public GameObject spriteRight;
-    public GameObject spriteBack;
 
     [Header("Va chạm")]
     [Tooltip("Layer chứa tường / vật cản (trong scene đang dùng Default)")]
@@ -57,6 +46,7 @@ public class Quai1AutoMove : MonoBehaviour
 
     private Rigidbody2D rb;
     private Collider2D bodyCollider;
+    private Animator animator;          // 1 Animator duy nhất, đổi hướng qua Blend Tree (MoveX/MoveY)
     private Direction currentDirection; // hướng đang đi hiện tại
     private float directionTimer;       // đếm thời gian để đổi hướng định kỳ
 
@@ -82,7 +72,7 @@ public class Quai1AutoMove : MonoBehaviour
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;       // mượt trên màn hình tần số cao
 
         bodyCollider = GetComponent<Collider2D>();
-        ResolveDirectionSprites(); // tự tìm 4 child sprite nếu chưa kéo thả trong Inspector
+        animator = GetComponent<Animator>();
         EnsureHealthComponent();
     }
 
@@ -108,7 +98,7 @@ public class Quai1AutoMove : MonoBehaviour
         }
 
         PickValidDirection(); // chọn hướng ban đầu (hướng nào không bị tường chặn)
-        UpdateSprite();       // bật đúng sprite theo hướng
+        UpdateAnimator();     // đặt Blend Tree đúng hướng ban đầu
     }
 
     // ── Vòng lặp game ─────────────────────────────────────────────────────
@@ -119,7 +109,7 @@ public class Quai1AutoMove : MonoBehaviour
         if (attackPauseTimer > 0f)
         {
             attackPauseTimer -= Time.deltaTime;
-            UpdateSprite();
+            UpdateAnimator();
             return;
         }
 
@@ -151,7 +141,7 @@ public class Quai1AutoMove : MonoBehaviour
                 PickValidDirection();
         }
 
-        UpdateSprite();
+        UpdateAnimator();
     }
 
     void FixedUpdate()
@@ -263,42 +253,17 @@ public class Quai1AutoMove : MonoBehaviour
         }
     }
 
-    // ── Sprite 4 hướng ────────────────────────────────────────────────────
+    // ── Animator (Blend Tree 4 hướng: MoveX/MoveY) ──────────────────────────
 
-    void ResolveDirectionSprites()
+    // Đẩy hướng đang đi vào Animator — Blend Tree tự chọn đúng animation,
+    // không SetActive/tắt-bật GameObject nên không bị giật/reset animation khi đổi hướng liên tục.
+    void UpdateAnimator()
     {
-        if (spriteNormal == null) spriteNormal = FindChild(normalChildName);
-        if (spriteLeft == null) spriteLeft = FindChild(leftChildName);
-        if (spriteRight == null) spriteRight = FindChild(rightChildName);
-        if (spriteBack == null) spriteBack = FindChild(backChildName);
-    }
+        if (animator == null) return;
 
-    // Tìm child theo tên bên trong object cha Quai1
-    GameObject FindChild(string childName)
-    {
-        if (string.IsNullOrWhiteSpace(childName))
-            return null;
-
-        Transform child = transform.Find(childName);
-        if (child != null)
-            return child.gameObject;
-
-        foreach (Transform descendant in transform.GetComponentsInChildren<Transform>(true))
-        {
-            if (descendant != transform && descendant.name == childName)
-                return descendant.gameObject;
-        }
-
-        return null;
-    }
-
-    // Bật 1 sprite đúng hướng, tắt 3 sprite còn lại
-    void UpdateSprite()
-    {
-        if (spriteNormal != null) spriteNormal.SetActive(currentDirection == Direction.Down);
-        if (spriteLeft != null) spriteLeft.SetActive(currentDirection == Direction.Left);
-        if (spriteRight != null) spriteRight.SetActive(currentDirection == Direction.Right);
-        if (spriteBack != null) spriteBack.SetActive(currentDirection == Direction.Up);
+        Vector2 dir = DirectionToVector(currentDirection);
+        animator.SetFloat("MoveX", dir.x);
+        animator.SetFloat("MoveY", dir.y);
     }
 
     // ── Chọn hướng ────────────────────────────────────────────────────────
