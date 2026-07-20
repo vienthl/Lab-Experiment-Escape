@@ -6,13 +6,16 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/sence/IntroCinematic.unity
+    path: Assets/scene/IntroCinematic.unity
     guid: b42bd04a4c304cc8ba8e90bd309e9776
   - enabled: 1
-    path: Assets/sence/MainMenu.unity
+    path: Assets/scene/MainMenu.unity
     guid: 0972b2afe81473f4cbf68eac5b4afeaa
   - enabled: 1
-    path: Assets/sence/Level1.unity
+    path: Assets/scene/Level1.unity
     guid: 7dab76623a0905442a0bd8410c30be58
+  - enabled: 1
+    path: Assets/scene/Level2.unity
+    guid: 55b2fee8433fd0f4698188357dd2208d
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

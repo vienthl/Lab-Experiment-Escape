@@ -24,6 +24,7 @@ public class PlayerHealth : MonoBehaviour
     Color baseColor = Color.white;
 
     public float CurrentHealth => currentHealth;
+    public float MaxHealth     => maxHealth; // alias viết hoa — TestBoss.cs (Mr.X) của Anh Huy dùng tên này
     public float HealthPercent => maxHealth > 0f ? currentHealth / maxHealth : 0f;
     public bool  IsDead        => currentHealth <= 0f;
 
@@ -63,6 +64,23 @@ public class PlayerHealth : MonoBehaviour
         Vector2 dir = ((Vector2)transform.position - sourcePosition).normalized;
         if (dir != Vector2.zero && movement != null)
             movement.ApplyKnockback(dir * knockbackForce);
+
+        StartFlash();
+    }
+
+    // Sát thương "thật" bỏ qua i-frame — dùng cho skill hút máu ẩn của boss Mr.X (TestBoss.cs):
+    // đòn hút máu luôn phải trúng, không được né bằng thời gian bất tử thông thường.
+    public void TakeTrueDamage(float amount)
+    {
+        if (IsDead || amount <= 0f) return;
+
+        currentHealth = Mathf.Max(0f, currentHealth - amount);
+
+        if (IsDead)
+        {
+            Die();
+            return;
+        }
 
         StartFlash();
     }

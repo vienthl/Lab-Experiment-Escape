@@ -7,7 +7,7 @@ public class LevelHUD : MonoBehaviour
     [Header("Vị trí (pixel, dưới thanh máu)")]
     public float panelX = 20f;
     public float panelY = 50f;
-    public float panelWidth = 280f;
+    public float panelWidth = 220f; // bằng đúng barWidth của PlayerHealthUI, tránh tràn rộng hơn thanh máu player
 
     [Header("Màu sắc")]
     public Color backgroundColor = new Color(0.08f, 0.08f, 0.08f, 0.75f);

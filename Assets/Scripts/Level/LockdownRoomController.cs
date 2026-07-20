@@ -10,6 +10,9 @@ public class LockdownRoomController : MonoBehaviour
     public class Wave
     {
         public EnemyHealth[] enemies;
+
+        [Tooltip("Boss (BossHealth) — dùng riêng vì boss không cùng class EnemyHealth, thường đặt ở wave cuối")]
+        public BossHealth[] bosses;
     }
 
     [Header("Cửa bị khóa cho tới khi xong")]
@@ -50,10 +53,16 @@ public class LockdownRoomController : MonoBehaviour
         {
             foreach (var wave in waves)
             {
-                if (wave?.enemies == null) continue;
-                foreach (var enemy in wave.enemies)
+                if (wave?.enemies != null)
                 {
-                    if (enemy != null) enemy.gameObject.SetActive(false);
+                    foreach (var enemy in wave.enemies)
+                        if (enemy != null) enemy.gameObject.SetActive(false);
+                }
+
+                if (wave?.bosses != null)
+                {
+                    foreach (var boss in wave.bosses)
+                        if (boss != null) boss.gameObject.SetActive(false);
                 }
             }
         }
@@ -110,15 +119,28 @@ public class LockdownRoomController : MonoBehaviour
         var wave = waves[currentWaveIndex];
         aliveInCurrentWave = 0;
 
-        if (wave?.enemies == null) return;
-
-        foreach (var enemy in wave.enemies)
+        if (wave?.enemies != null)
         {
-            if (enemy == null) continue;
+            foreach (var enemy in wave.enemies)
+            {
+                if (enemy == null) continue;
 
-            enemy.gameObject.SetActive(true);
-            enemy.OnDied += HandleEnemyDied;
-            aliveInCurrentWave++;
+                enemy.gameObject.SetActive(true);
+                enemy.OnDied += HandleEnemyDied;
+                aliveInCurrentWave++;
+            }
+        }
+
+        if (wave?.bosses != null)
+        {
+            foreach (var boss in wave.bosses)
+            {
+                if (boss == null) continue;
+
+                boss.gameObject.SetActive(true);
+                boss.OnDied += HandleBossDied;
+                aliveInCurrentWave++;
+            }
         }
 
         // Wave rỗng (designer để trống) — coi như xong ngay, qua wave kế.
@@ -129,6 +151,15 @@ public class LockdownRoomController : MonoBehaviour
     void HandleEnemyDied(EnemyHealth enemy)
     {
         enemy.OnDied -= HandleEnemyDied;
+        aliveInCurrentWave--;
+
+        if (aliveInCurrentWave <= 0)
+            ActivateNextWave();
+    }
+
+    void HandleBossDied(BossHealth boss)
+    {
+        boss.OnDied -= HandleBossDied;
         aliveInCurrentWave--;
 
         if (aliveInCurrentWave <= 0)

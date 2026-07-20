@@ -240,7 +240,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6580675500d57f3419e18fee36211371, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nextSceneWhenNoLevel2: MainMenu
+  fadeDuration: 0.5
+  pausableScenes:
+  - Level1
+  - Level1
 --- !u!4 &1189933984
 Transform:
   m_ObjectHideFlags: 0

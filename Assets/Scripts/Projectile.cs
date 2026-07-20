@@ -53,6 +53,18 @@ public class Projectile : MonoBehaviour
             enemy.TakeDamage(dmg);
         }
 
+        // Boss dùng class BossHealth riêng (không phải EnemyHealth) — % sát thương thấp hơn quái thường
+        // vì máu boss thường lớn hơn nhiều.
+        var boss = other.GetComponentInParent<BossHealth>();
+        if (boss != null && !boss.IsDead)
+        {
+            float dmg = potionType == PotionType.Lightning
+                ? boss.MaxHealth * 0.10f
+                : boss.MaxHealth * 0.05f;
+
+            boss.TakeDamage(dmg);
+        }
+
         if (hitEffectPrefab != null)
             Instantiate(hitEffectPrefab, transform.position, Quaternion.identity);
 

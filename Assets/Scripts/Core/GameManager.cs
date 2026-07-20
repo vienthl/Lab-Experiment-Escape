@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,8 +12,9 @@ public class GameManager : MonoBehaviour
 
     public SaveSystem.SaveData SavedData { get; private set; }
 
-    [Header("Level Complete (tạm thời — Level 2 chưa có map)")]
-    public string nextSceneWhenNoLevel2 = "MainMenu";
+    [Header("Chuyển cảnh (fade tối → sáng)")]
+    [Tooltip("Thời gian fade mỗi chiều (giây) — tổng thời gian tối màn hình = 2 lần số này")]
+    public float fadeDuration = 0.5f;
 
     [Header("Pause")]
     [Tooltip("Tên scene gameplay được phép bấm ESC để Pause — mở rộng thêm khi có Level2/3")]
@@ -22,9 +24,8 @@ public class GameManager : MonoBehaviour
     public GameContext CurrentContext { get; private set; } = GameContext.Fresh;
 
     bool isLevelComplete;
-    GUIStyle titleStyle;
-    GUIStyle bodyStyle;
-    Texture2D overlayTex;
+    float fadeAlpha;
+    Texture2D fadeTex;
 
     void Awake()
     {
@@ -95,10 +96,12 @@ public class GameManager : MonoBehaviour
             CurrentContext = GameContext.Fresh;
     }
 
-    // Gọi từ ExitZone khi player thoát level thành công.
-    public void CompleteLevel()
+    // Gọi từ ExitZone khi player thoát level thành công — tự lưu game rồi fade tối/sáng
+    // sang scene kế tiếp, không cần bấm nút gì cả.
+    public void CompleteLevel(string nextScene)
     {
         if (isLevelComplete) return;
+        isLevelComplete = true;
 
         var inventory = FindFirstObjectByType<PlayerInventory>();
         if (inventory != null)
@@ -112,7 +115,34 @@ public class GameManager : MonoBehaviour
         SavedData.levelReached = SceneManager.GetActiveScene().name;
         SaveSystem.Save(SavedData);
 
-        isLevelComplete = true;
+        StartCoroutine(FadeAndLoad(nextScene));
+    }
+
+    IEnumerator FadeAndLoad(string nextScene)
+    {
+        // Tối dần
+        float t = 0f;
+        while (t < fadeDuration)
+        {
+            t += Time.unscaledDeltaTime;
+            fadeAlpha = Mathf.Clamp01(t / fadeDuration);
+            yield return null;
+        }
+        fadeAlpha = 1f;
+
+        SceneManager.LoadScene(nextScene);
+        yield return null; // đợi 1 frame cho scene mới load xong trước khi sáng dần lại
+
+        // Sáng dần lại
+        t = 0f;
+        while (t < fadeDuration)
+        {
+            t += Time.unscaledDeltaTime;
+            fadeAlpha = 1f - Mathf.Clamp01(t / fadeDuration);
+            yield return null;
+        }
+        fadeAlpha = 0f;
+        isLevelComplete = false; // sẵn sàng cho lần CompleteLevel kế tiếp (Level2 → Level3...)
     }
 
     public void RestartLevel()
@@ -129,35 +159,14 @@ public class GameManager : MonoBehaviour
 
     void OnGUI()
     {
-        if (!isLevelComplete) return;
+        if (fadeAlpha <= 0f) return;
 
-        overlayTex ??= MakeTex(new Color(0f, 0f, 0f, 0.8f));
-        titleStyle ??= new GUIStyle(GUI.skin.label)
-        {
-            fontSize = 56,
-            fontStyle = FontStyle.Bold,
-            alignment = TextAnchor.MiddleCenter,
-            normal = { textColor = new Color(0.2f, 0.9f, 0.6f) }
-        };
-        bodyStyle ??= new GUIStyle(GUI.skin.label)
-        {
-            fontSize = 22,
-            alignment = TextAnchor.MiddleCenter,
-            normal = { textColor = Color.white }
-        };
+        fadeTex ??= MakeTex(Color.black);
 
-        GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), overlayTex);
-
-        float cx = Screen.width * 0.5f;
-        float cy = Screen.height * 0.5f;
-
-        GUI.Label(new Rect(cx - 300f, cy - 140f, 600f, 80f), "LEVEL COMPLETE", titleStyle);
-        GUI.Label(new Rect(cx - 260f, cy - 60f, 520f, 40f),
-            $"Bình lửa: {SavedData.firePotions}   Bình điện: {SavedData.lightningPotions}   Bình hồi máu: {SavedData.healPotions}",
-            bodyStyle);
-
-        if (GUI.Button(new Rect(cx - 100f, cy + 20f, 200f, 46f), "Về Main Menu"))
-            LoadLevel(nextSceneWhenNoLevel2);
+        Color prev = GUI.color;
+        GUI.color = new Color(1f, 1f, 1f, fadeAlpha);
+        GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), fadeTex);
+        GUI.color = prev;
     }
 
     static Texture2D MakeTex(Color color)
