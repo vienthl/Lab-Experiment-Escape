@@ -1,141 +1,186 @@
 ﻿using System.Collections;
+
 using UnityEngine;
 
 public class TestBoss : MonoBehaviour
 {
     [Header("Target")]
-    // Player mà boss sẽ phát hiện, đuổi theo và tấn công
     public Transform player;
 
     [Header("Detection")]
-    // Khoảng cách boss bắt đầu phát hiện Player
     public float detectRange = 6f;
-
-    // Khoảng cách Player chạy quá xa thì boss mất dấu
     public float loseRange = 9f;
 
     [Header("Movement")]
-    // Tốc độ di chuyển của boss khi đuổi Player
     public float moveSpeed = 2.5f;
 
     [Header("Attack")]
-    // Khoảng cách đủ gần để boss bắt đầu đánh
     public float attackRange = 2f;
-
-    // Thời gian chạy một lần animation đánh
     public float attackDuration = 0.8f;
-
-    // Thời gian nghỉ giữa các lần đánh
     public float attackCooldown = 0.5f;
 
+    [Tooltip("Mỗi đòn đánh thường gây 15% máu tối đa của Player.")]
+    [Range(0f, 1f)]
+    public float normalAttackDamagePercent = 0.15f;
+
     [Header("Animator State Name")]
-    // Tên state attack trong Animator
-    // Tên này phải trùng chính xác với state trong Animator
     public string attackStateName = "BT_Attack";
+
+    [Header("Hidden Skill")]
+    [Tooltip("Kích hoạt khi Boss còn 30% máu hoặc thấp hơn.")]
+    [Range(0f, 1f)]
+    public float hiddenSkillTriggerPercent = 0.30f;
+
+    [Tooltip("Tốc độ Boss lao tới Player.")]
+    public float drainRushSpeed = 7f;
+
+    [Tooltip("Khoảng cách để bắt đầu hút máu.")]
+    public float drainRange = 1.2f;
+
+    [Tooltip("Thời gian hút máu.")]
+    public float drainDuration = 1.2f;
+
+    [Tooltip("Skill hút 30% máu tối đa của Player.")]
+    [Range(0f, 1f)]
+    public float drainDamagePercent = 0.30f;
+
+    [Tooltip("Thời gian nghỉ sau khi hút máu.")]
+    public float drainEndDelay = 0.4f;
+
+    [Header("Drain Beam")]
+    [Tooltip("Kéo LineRenderer của object DrainBeam vào đây.")]
+    [SerializeField] private LineRenderer drainBeam;
+
+    [Tooltip("Điểm bắt đầu tia trên Boss. Để trống sẽ dùng vị trí Boss.")]
+    [SerializeField] private Transform beamStartPoint;
+
+    [Tooltip("Điểm kết thúc tia trên Player. Để trống sẽ dùng vị trí Player.")]
+    [SerializeField] private Transform beamEndPoint;
 
     private Rigidbody2D rb;
     private Animator animator;
+    private BossHealth bossHealth;
+    private PlayerHealth playerHealth;
 
-    // Hướng di chuyển hiện tại của boss
     private Vector2 moveDirection;
-
-    // Hướng nhìn cuối cùng của boss
-    // Mặc định nhìn xuống
     private Vector2 lastMoveDirection = Vector2.down;
 
-    // Boss đã từng thấy Player chưa
-    private bool hasSeenPlayer = false;
+    private bool hasSeenPlayer;
+    private bool isAttacking;
+    private bool isAttackLoopRunning;
+    private bool hiddenSkillUsed;
+    private bool isUsingHiddenSkill;
 
-    // Boss đang thực hiện một cú đánh
-    private bool isAttacking = false;
+    private float currentSpeedMultiplier = 1f;
 
-    // Coroutine đánh liên tục có đang chạy không
-    private bool isAttackLoopRunning = false;
+    private Coroutine slowCoroutine;
+    private Coroutine attackCoroutine;
+    private Coroutine hiddenSkillCoroutine;
 
-    void Awake()
+    private void Awake()
     {
-        // Lấy Rigidbody2D và Animator gắn trên boss
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
-    }
+        bossHealth = GetComponent<BossHealth>();
 
-    void Start()
-    {
-        // Nếu chưa kéo Player vào Inspector,
-        // boss sẽ tự tìm object có Tag là "Player"
-        if (player == null)
+        if (drainBeam != null)
         {
-            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-
-            if (playerObj != null)
-            {
-                player = playerObj.transform;
-            }
+            drainBeam.enabled = false;
+            drainBeam.useWorldSpace = true;
+            drainBeam.positionCount = 2;
         }
     }
 
-    void Update()
+    private void Start()
     {
-        // Nếu không tìm thấy Player thì boss đứng yên
+        FindPlayer();
+        bossHealth?.SetHealthBarVisible(false);
+    }
+
+    private void Update()
+    {
+        if (bossHealth != null && bossHealth.IsDead)
+        {
+            StopMoving();
+            DisableDrainBeam();
+            return;
+        }
+
+        if (player == null)
+            FindPlayer();
+
         if (player == null)
         {
             StopMoving();
             SetIdleAnimation();
+            bossHealth?.SetHealthBarVisible(false);
             return;
         }
 
-        // Tính khoảng cách từ boss đến Player
-        float distance = Vector2.Distance(transform.position, player.position);
+        if (playerHealth == null)
+            playerHealth = player.GetComponent<PlayerHealth>();
 
-        // Nếu boss chưa thấy Player
+        if (playerHealth != null && playerHealth.IsDead)
+        {
+            StopMoving();
+            SetIdleAnimation();
+            DisableDrainBeam();
+            return;
+        }
+
+        if (isUsingHiddenSkill)
+            return;
+
+        CheckHiddenSkill();
+
+        if (isUsingHiddenSkill)
+            return;
+
+        float distance = Vector2.Distance(
+            transform.position,
+            player.position
+        );
+
         if (!hasSeenPlayer)
         {
-            // Player vào vùng phát hiện thì boss bắt đầu nhận mục tiêu
             if (distance <= detectRange)
             {
                 hasSeenPlayer = true;
+                bossHealth?.SetHealthBarVisible(true);
             }
             else
             {
-                // Player chưa vào tầm phát hiện thì boss đứng yên
                 StopMoving();
                 SetIdleAnimation();
+                bossHealth?.SetHealthBarVisible(false);
                 return;
             }
         }
 
-        // Nếu Player chạy ra quá xa thì boss mất dấu
         if (distance > loseRange)
         {
-            hasSeenPlayer = false;
-            StopMoving();
-            SetIdleAnimation();
+            LosePlayer();
             return;
         }
 
-        // Nếu Player nằm trong vùng đánh
+        bossHealth?.SetHealthBarVisible(true);
+
         if (distance <= attackRange)
         {
-            // Boss đứng lại
             StopMoving();
-
-            // Boss xoay hướng nhìn về phía Player
             FacePlayer();
-
-            // Set animation đứng theo hướng nhìn
             SetIdleAnimation();
 
-            // Nếu chưa chạy vòng lặp đánh thì bắt đầu đánh liên tục
             if (!isAttackLoopRunning)
             {
-                StartCoroutine(AttackLoop());
+                attackCoroutine = StartCoroutine(AttackLoop());
             }
 
             return;
         }
 
-        // Nếu Player chưa trong vùng đánh thì boss tiếp tục đuổi
-        // Chỉ đuổi khi boss không đang đánh
+        StopAttackLoop();
+
         if (!isAttacking)
         {
             ChasePlayer();
@@ -143,130 +188,434 @@ public class TestBoss : MonoBehaviour
         }
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
-        // Nếu boss đang đánh thì không cho di chuyển
+        if (rb == null)
+            return;
+
+        if (bossHealth != null && bossHealth.IsDead)
+        {
+            rb.linearVelocity = Vector2.zero;
+            return;
+        }
+
+        if (isUsingHiddenSkill)
+            return;
+
         if (isAttacking || isAttackLoopRunning)
         {
             rb.linearVelocity = Vector2.zero;
             return;
         }
 
-        // Di chuyển boss theo hướng đã tính trong Update
-        rb.linearVelocity = moveDirection * moveSpeed;
+        float currentMoveSpeed =
+            moveSpeed * currentSpeedMultiplier;
+
+        rb.linearVelocity =
+            moveDirection * currentMoveSpeed;
     }
 
-    void ChasePlayer()
+    private void LateUpdate()
     {
-        // Tính hướng từ boss tới Player
-        Vector2 direction = player.position - transform.position;
+        if (drainBeam != null && drainBeam.enabled)
+            UpdateDrainBeam();
+    }
 
-        // Chuẩn hóa hướng để boss chạy đều tốc độ
+    private void FindPlayer()
+    {
+        if (player == null)
+        {
+            GameObject playerObject =
+                GameObject.FindGameObjectWithTag("Player");
+
+            if (playerObject != null)
+                player = playerObject.transform;
+        }
+
+        if (player != null)
+            playerHealth = player.GetComponent<PlayerHealth>();
+    }
+
+    private void CheckHiddenSkill()
+    {
+        if (hiddenSkillUsed || isUsingHiddenSkill)
+            return;
+
+        if (bossHealth == null || bossHealth.IsDead)
+            return;
+
+        if (player == null || playerHealth == null || playerHealth.IsDead)
+            return;
+
+        if (bossHealth.HealthPercent > hiddenSkillTriggerPercent)
+            return;
+
+        hiddenSkillUsed = true;
+        hiddenSkillCoroutine = StartCoroutine(HiddenDrainSkill());
+    }
+
+    private IEnumerator HiddenDrainSkill()
+    {
+        isUsingHiddenSkill = true;
+        StopAttackLoop();
+        StopMoving();
+
+        if (slowCoroutine != null)
+        {
+            StopCoroutine(slowCoroutine);
+            slowCoroutine = null;
+        }
+
+        currentSpeedMultiplier = 1f;
+
+        while (
+            player != null &&
+            playerHealth != null &&
+            !playerHealth.IsDead &&
+            bossHealth != null &&
+            !bossHealth.IsDead &&
+            Vector2.Distance(transform.position, player.position) > drainRange
+        )
+        {
+            Vector2 direction =
+                ((Vector2)player.position -
+                 (Vector2)transform.position).normalized;
+
+            if (direction != Vector2.zero)
+            {
+                lastMoveDirection = direction;
+                SetRunAnimation();
+            }
+
+            if (rb != null)
+                rb.linearVelocity = direction * drainRushSpeed;
+
+            yield return new WaitForFixedUpdate();
+        }
+
+        StopMoving();
+        SetIdleAnimation();
+
+        if (
+            player == null ||
+            playerHealth == null ||
+            playerHealth.IsDead ||
+            bossHealth == null ||
+            bossHealth.IsDead
+        )
+        {
+            FinishHiddenSkill();
+            yield break;
+        }
+
+        EnableDrainBeam();
+
+        float elapsed = 0f;
+        while (elapsed < drainDuration)
+        {
+            if (
+                player == null ||
+                playerHealth == null ||
+                playerHealth.IsDead ||
+                bossHealth == null ||
+                bossHealth.IsDead
+            )
+            {
+                break;
+            }
+
+            UpdateDrainBeam();
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        DisableDrainBeam();
+
+        if (
+            playerHealth != null &&
+            !playerHealth.IsDead &&
+            bossHealth != null &&
+            !bossHealth.IsDead
+        )
+        {
+            float drainDamage =
+                playerHealth.MaxHealth * drainDamagePercent;
+
+            playerHealth.TakeTrueDamage(drainDamage);
+            bossHealth.HealToFull();
+
+            Debug.Log(
+                $"Boss hút {drainDamage} HP của Player và hồi đầy máu.",
+                this
+            );
+        }
+
+        yield return new WaitForSeconds(drainEndDelay);
+        FinishHiddenSkill();
+    }
+
+    private void FinishHiddenSkill()
+    {
+        DisableDrainBeam();
+        StopMoving();
+
+        isUsingHiddenSkill = false;
+        hiddenSkillCoroutine = null;
+    }
+
+    private void EnableDrainBeam()
+    {
+        if (drainBeam == null)
+            return;
+
+        drainBeam.positionCount = 2;
+        drainBeam.useWorldSpace = true;
+        drainBeam.enabled = true;
+        UpdateDrainBeam();
+    }
+
+    private void DisableDrainBeam()
+    {
+        if (drainBeam != null)
+            drainBeam.enabled = false;
+    }
+
+    private void UpdateDrainBeam()
+    {
+        if (drainBeam == null || player == null)
+            return;
+
+        Vector3 startPosition =
+            beamStartPoint != null
+                ? beamStartPoint.position
+                : transform.position;
+
+        Vector3 endPosition =
+            beamEndPoint != null
+                ? beamEndPoint.position
+                : player.position;
+
+        drainBeam.SetPosition(0, startPosition);
+        drainBeam.SetPosition(1, endPosition);
+    }
+
+    public void ApplySlow(float multiplier, float duration)
+    {
+        if (
+            bossHealth != null &&
+            bossHealth.IsDead
+        )
+        {
+            return;
+        }
+
+        if (isUsingHiddenSkill)
+            return;
+
+        multiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
+        duration = Mathf.Max(0.1f, duration);
+
+        if (slowCoroutine != null)
+            StopCoroutine(slowCoroutine);
+
+        slowCoroutine = StartCoroutine(
+            SlowRoutine(multiplier, duration)
+        );
+    }
+
+    private IEnumerator SlowRoutine(
+        float multiplier,
+        float duration
+    )
+    {
+        currentSpeedMultiplier = multiplier;
+
+        Debug.Log(
+            $"Boss bị làm chậm còn {multiplier * 100f}% tốc độ trong {duration} giây.",
+            this
+        );
+
+        yield return new WaitForSeconds(duration);
+
+        currentSpeedMultiplier = 1f;
+        slowCoroutine = null;
+
+        Debug.Log("Boss đã hết hiệu ứng làm chậm.", this);
+    }
+
+    private void ChasePlayer()
+    {
+        if (player == null)
+            return;
+
+        Vector2 direction =
+            (Vector2)player.position -
+            (Vector2)transform.position;
+
         moveDirection = direction.normalized;
 
-        // Cập nhật hướng nhìn cuối cùng của boss
         if (moveDirection != Vector2.zero)
-        {
             lastMoveDirection = moveDirection;
-        }
     }
 
-    void FacePlayer()
+    private void FacePlayer()
     {
-        // Tính hướng từ boss tới Player
-        Vector2 direction = player.position - transform.position;
+        if (player == null)
+            return;
 
-        // Cập nhật hướng nhìn để boss quay mặt về phía Player khi đánh
+        Vector2 direction =
+            (Vector2)player.position -
+            (Vector2)transform.position;
+
         if (direction != Vector2.zero)
-        {
             lastMoveDirection = direction.normalized;
-        }
     }
 
-    IEnumerator AttackLoop()
+    private IEnumerator AttackLoop()
     {
-        // Đánh dấu vòng lặp attack đang chạy
         isAttackLoopRunning = true;
 
-        // Chừng nào Player còn tồn tại và vẫn nằm trong attackRange,
-        // boss sẽ tiếp tục đánh
-        while (player != null && Vector2.Distance(transform.position, player.position) <= attackRange)
+        while (
+            player != null &&
+            playerHealth != null &&
+            !playerHealth.IsDead &&
+            bossHealth != null &&
+            !bossHealth.IsDead &&
+            !isUsingHiddenSkill &&
+            Vector2.Distance(transform.position, player.position) <= attackRange
+        )
         {
-            // Boss bắt đầu một cú đánh
             isAttacking = true;
-
-            // Đứng yên trước khi đánh
             StopMoving();
-
-            // Quay mặt về phía Player
             FacePlayer();
 
-            // Cập nhật hướng animation theo hướng nhìn
-            animator.SetFloat("MoveX", lastMoveDirection.x);
-            animator.SetFloat("MoveY", lastMoveDirection.y);
+            if (animator != null)
+            {
+                animator.SetFloat("MoveX", lastMoveDirection.x);
+                animator.SetFloat("MoveY", lastMoveDirection.y);
+                animator.SetBool("IsMoving", false);
+                animator.Play(attackStateName, 0, 0f);
+            }
 
-            // Boss không chạy trong lúc đánh
-            animator.SetBool("IsMoving", false);
-
-            // Ép state attack chạy lại từ frame đầu
-            // Dùng để boss đánh nhiều lần liên tục thay vì chỉ đánh một lần
-            animator.Play(attackStateName, 0, 0f);
-
-            // Chờ animation đánh chạy xong
             yield return new WaitForSeconds(attackDuration);
 
-            // Kết thúc một cú đánh
+            if (
+                player != null &&
+                playerHealth != null &&
+                !playerHealth.IsDead &&
+                bossHealth != null &&
+                !bossHealth.IsDead &&
+                !isUsingHiddenSkill &&
+                Vector2.Distance(transform.position, player.position) <= attackRange
+            )
+            {
+                float damage =
+                    playerHealth.MaxHealth *
+                    normalAttackDamagePercent;
+
+                playerHealth.TakeDamage(
+                    damage,
+                    transform.position
+                );
+            }
+
             isAttacking = false;
 
-            // Chờ cooldown trước khi đánh tiếp
             yield return new WaitForSeconds(attackCooldown);
         }
 
-        // Khi Player ra khỏi vùng đánh thì dừng vòng lặp attack
+        isAttacking = false;
+        isAttackLoopRunning = false;
+        attackCoroutine = null;
+    }
+
+    private void StopAttackLoop()
+    {
+        if (attackCoroutine != null)
+        {
+            StopCoroutine(attackCoroutine);
+            attackCoroutine = null;
+        }
+
         isAttacking = false;
         isAttackLoopRunning = false;
     }
 
-    void StopMoving()
+    private void LosePlayer()
     {
-        // Xóa hướng di chuyển
-        moveDirection = Vector2.zero;
+        hasSeenPlayer = false;
 
-        // Dừng Rigidbody2D lại ngay lập tức
-        rb.linearVelocity = Vector2.zero;
+        StopAttackLoop();
+
+        if (slowCoroutine != null)
+        {
+            StopCoroutine(slowCoroutine);
+            slowCoroutine = null;
+        }
+
+        currentSpeedMultiplier = 1f;
+
+        StopMoving();
+        SetIdleAnimation();
+        bossHealth?.SetHealthBarVisible(false);
     }
 
-    void SetIdleAnimation()
+    private void StopMoving()
     {
-        // Set hướng nhìn cho animation idle
+        moveDirection = Vector2.zero;
+
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
+    }
+
+    private void SetIdleAnimation()
+    {
+        if (animator == null)
+            return;
+
         animator.SetFloat("MoveX", lastMoveDirection.x);
         animator.SetFloat("MoveY", lastMoveDirection.y);
-
-        // Boss không di chuyển
         animator.SetBool("IsMoving", false);
     }
 
-    void SetRunAnimation()
+    private void SetRunAnimation()
     {
-        // Set hướng chạy theo hướng nhìn cuối cùng
+        if (animator == null)
+            return;
+
         animator.SetFloat("MoveX", lastMoveDirection.x);
         animator.SetFloat("MoveY", lastMoveDirection.y);
-
-        // Boss đang chạy
         animator.SetBool("IsMoving", true);
     }
 
-    void OnDrawGizmosSelected()
+    private void OnDisable()
     {
-        // Vòng màu vàng: vùng boss phát hiện Player
+        StopAllCoroutines();
+
+        attackCoroutine = null;
+        hiddenSkillCoroutine = null;
+        slowCoroutine = null;
+
+        currentSpeedMultiplier = 1f;
+        isAttacking = false;
+        isAttackLoopRunning = false;
+        isUsingHiddenSkill = false;
+
+        DisableDrainBeam();
+        StopMoving();
+    }
+
+    private void OnDrawGizmosSelected()
+    {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, detectRange);
 
-        // Vòng màu đỏ: vùng boss có thể đánh Player
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
 
-        // Vòng màu xám: vùng Player chạy quá xa thì boss mất dấu
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawWireSphere(transform.position, drainRange);
+
         Gizmos.color = Color.gray;
         Gizmos.DrawWireSphere(transform.position, loseRange);
     }
