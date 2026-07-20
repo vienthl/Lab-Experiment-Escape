@@ -171,6 +171,8 @@ MonoBehaviour:
   incidentPhoto: {fileID: 21300000, guid: cb41e054184114a4fb706bc09166dcd5, type: 3}
   survivorPhoto: {fileID: 21300000, guid: 1a29a073bf471154bbc97df996e9008b, type: 3}
   titleBackdrop: {fileID: 21300000, guid: 4216ca05010f24a439a42ebaae0cd937, type: 3}
+  emblemLogo: {fileID: 21300000, guid: 05cb76f7a84ee464692e174b3878ee9d, type: 3}
+  typeCharsPerSecond: 45
 --- !u!1 &519267619
 GameObject:
   m_ObjectHideFlags: 0
