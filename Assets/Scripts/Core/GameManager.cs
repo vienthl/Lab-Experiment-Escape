@@ -14,6 +14,13 @@ public class GameManager : MonoBehaviour
     [Header("Level Complete (tạm thời — Level 2 chưa có map)")]
     public string nextSceneWhenNoLevel2 = "MainMenu";
 
+    [Header("Pause")]
+    [Tooltip("Tên scene gameplay được phép bấm ESC để Pause — mở rộng thêm khi có Level2/3")]
+    public string[] pausableScenes = { "Level1" };
+
+    public enum GameContext { Fresh, Paused, Dead }
+    public GameContext CurrentContext { get; private set; } = GameContext.Fresh;
+
     bool isLevelComplete;
     GUIStyle titleStyle;
     GUIStyle bodyStyle;
@@ -30,6 +37,62 @@ public class GameManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         SavedData = SaveSystem.Load();
+    }
+
+    void Update()
+    {
+        if (!Input.GetKeyDown(KeyCode.Escape)) return;
+
+        if (CurrentContext == GameContext.Fresh && IsCurrentScenePausable())
+            PauseGame();
+        else if (CurrentContext == GameContext.Paused)
+            ResumeGame();
+    }
+
+    bool IsCurrentScenePausable()
+    {
+        string active = SceneManager.GetActiveScene().name;
+        foreach (var name in pausableScenes)
+            if (name == active) return true;
+        return false;
+    }
+
+    // ESC lúc đang chơi Level1 → đóng băng gameplay, mở đè MainMenu lên trên (Additive) làm màn Pause,
+    // giữ nguyên state Level1 (vị trí player, quái, đồ đã nhặt...) không mất gì khi Resume.
+    public void PauseGame()
+    {
+        if (CurrentContext != GameContext.Fresh) return;
+
+        CurrentContext = GameContext.Paused;
+        Time.timeScale = 0f;
+        SceneManager.LoadScene("MainMenu", LoadSceneMode.Additive);
+    }
+
+    // Gọi từ nút PLAY (lúc đã đổi label thành "RESUME") trong MainMenuController.
+    public void ResumeGame()
+    {
+        if (CurrentContext != GameContext.Paused) return;
+
+        CurrentContext = GameContext.Fresh;
+        Time.timeScale = 1f;
+        SceneManager.UnloadSceneAsync("MainMenu");
+    }
+
+    // Gọi từ GameOverUI khi player chết và bấm phím xác nhận — thay Level1 bằng MainMenu hẳn
+    // (không cần giữ state cũ vì đã thua), nút PLAY sẽ tự đổi label thành "RESTART".
+    public void NotifyPlayerDied()
+    {
+        CurrentContext = GameContext.Dead;
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("MainMenu");
+    }
+
+    // MainMenuController gọi ngay sau khi đã đọc context để hiện đúng label —
+    // tiêu thụ trạng thái Dead, tránh lần vào MainMenu tiếp theo (từ Title) vẫn hiện "RESTART".
+    public void ClearDeathContext()
+    {
+        if (CurrentContext == GameContext.Dead)
+            CurrentContext = GameContext.Fresh;
     }
 
     // Gọi từ ExitZone khi player thoát level thành công.

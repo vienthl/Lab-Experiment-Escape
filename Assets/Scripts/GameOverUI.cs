@@ -36,7 +36,14 @@ public class GameOverUI : MonoBehaviour
         }
 
         if (isDead && IsVisible() && Input.GetKeyDown(KeyCode.R))
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        {
+            // Chuyển về MainMenu thay vì load lại Level1 trực tiếp — GameManager đánh dấu context Dead,
+            // MainMenuController sẽ tự đổi nút PLAY thành RESTART khi hiện lên.
+            if (GameManager.Instance != null)
+                GameManager.Instance.NotifyPlayerDied();
+            else
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
     }
 
     bool IsVisible() => isDead && Time.time - diedAt >= showDelay;
@@ -72,7 +79,7 @@ public class GameOverUI : MonoBehaviour
         float cy = Screen.height * 0.5f;
 
         GUI.Label(new Rect(cx - 300f, cy - 70f, 600f, 90f), "GAME OVER", titleStyle);
-        GUI.Label(new Rect(cx - 220f, cy + 30f, 440f, 40f), "Nhấn  R  để chơi lại", hintStyle);
+        GUI.Label(new Rect(cx - 220f, cy + 30f, 440f, 40f), "Nhấn  R  để về Menu", hintStyle);
     }
 
     static Texture2D MakeTex(Color color)

@@ -82,10 +82,16 @@ public class WorldHealthBar : MonoBehaviour
     static Sprite CreateWhiteSprite()
     {
         var tex = Texture2D.whiteTexture;
+
+        // pixelsPerUnit = tex.width → sprite gốc (scale=1) có kích thước ĐÚNG 1×1 world unit.
+        // Bắt buộc phải vậy: SetFill() tính localPosition theo barWidth như đơn vị world thật,
+        // nên localScale cũng phải quy đổi 1:1 sang world unit — nếu lệch hệ số (như 100f cũ với
+        // texture vài pixel) thì kích thước hiển thị và độ dịch chuyển vị trí sẽ không khớp nhau,
+        // khiến Fill trông như "trôi" ra xa Background khi máu thay đổi.
         return Sprite.Create(
             tex,
             new Rect(0f, 0f, tex.width, tex.height),
             new Vector2(0.5f, 0.5f),
-            100f);
+            tex.width);
     }
 }

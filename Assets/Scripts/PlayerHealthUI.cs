@@ -31,7 +31,9 @@ public class PlayerHealthUI : MonoBehaviour
 
     void OnGUI()
     {
-        if (playerHealth == null) return;
+        // Time.timeScale == 0 nghĩa là đang Pause (MainMenu đè lên trên) — OnGUI luôn vẽ ĐÈ LÊN
+        // TRÊN CÙNG mọi Canvas dù sortingOrder thế nào, nên phải tự ẩn để không xuyên qua màn Pause.
+        if (playerHealth == null || Time.timeScale <= 0f) return;
 
         float pct = playerHealth.HealthPercent;
 

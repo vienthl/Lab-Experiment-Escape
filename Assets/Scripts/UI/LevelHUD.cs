@@ -29,7 +29,9 @@ public class LevelHUD : MonoBehaviour
 
     void OnGUI()
     {
-        if (inventory == null) return;
+        // OnGUI luôn vẽ đè lên trên mọi Canvas bất kể sortingOrder — ẩn đi lúc Pause (timeScale = 0)
+        // để không xuyên qua màn MainMenu đang đè lên trên.
+        if (inventory == null || Time.timeScale <= 0f) return;
 
         textStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 16, normal = { textColor = textColor } };
         warningStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 16, fontStyle = FontStyle.Bold, normal = { textColor = warningColor } };

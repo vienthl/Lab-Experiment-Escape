@@ -5563,7 +5563,7 @@ MonoBehaviour:
     - {fileID: 322090981}
     - {fileID: 1304668143}
   autoStartOnLevelLoad: 1
-  timeLimit: 100
+  timeLimit: 300
   onTimeExpired:
     m_PersistentCalls:
       m_Calls: []

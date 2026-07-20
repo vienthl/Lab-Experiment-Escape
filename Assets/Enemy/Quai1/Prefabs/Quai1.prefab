@@ -155,9 +155,9 @@ MonoBehaviour:
   maxHealth: 100
   showBar: 1
   hideBarWhenFull: 0
-  healthBarOffset: {x: 0, y: 0.5, z: 0}
-  healthBarWidth: 20
-  healthBarHeight: 2
+  healthBarOffset: {x: 0, y: 0.8, z: 0}
+  healthBarWidth: 1.2
+  healthBarHeight: 0.15
   deathFadeDuration: 0.25
   lootPrefab: {fileID: 0}
   dropChance: 0.3
