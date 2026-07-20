@@ -13,6 +13,12 @@ public class EnemyHealth : MonoBehaviour
     [Tooltip("Ẩn thanh máu khi còn đủ máu (100%)")]
     public bool hideBarWhenFull = false;
 
+    [Header("Kích thước & vị trí thanh máu")]
+    [Tooltip("Vị trí thanh máu so với gốc quái (Y = độ cao phía trên đầu)")]
+    public Vector3 healthBarOffset = new Vector3(0f, 1.4f, 0f);
+    public float healthBarWidth = 1.5f;
+    public float healthBarHeight = 0.14f;
+
     [Header("Chết")]
     [Tooltip("Thời gian mờ dần rồi biến mất (giây)")]
     public float deathFadeDuration = 0.25f;
@@ -70,6 +76,11 @@ public class EnemyHealth : MonoBehaviour
         healthBar = barGo.GetComponent<WorldHealthBar>();
         if (healthBar == null)
             healthBar = barGo.gameObject.AddComponent<WorldHealthBar>();
+
+        // Áp kích thước/vị trí từ EnemyHealth (chỉnh được trên prefab) TRƯỚC khi Build dựng sprite.
+        healthBar.localOffset = healthBarOffset;
+        healthBar.barWidth = healthBarWidth;
+        healthBar.barHeight = healthBarHeight;
 
         healthBar.Build();
     }

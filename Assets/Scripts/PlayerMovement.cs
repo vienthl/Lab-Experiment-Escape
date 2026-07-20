@@ -185,19 +185,26 @@ public class PlayerMovement : MonoBehaviour
     {
         isDrinking = true;
 
-        movement = Vector2.zero;
+        try
+        {
+            movement = Vector2.zero;
 
-        animator.SetFloat("Speed", 0);
-        animator.SetFloat("MoveX", 0);
-        animator.SetFloat("MoveY", 0);
-        animator.SetFloat("LastMoveX", lastMoveDirection.x);
-        animator.SetFloat("LastMoveY", lastMoveDirection.y);
+            animator.SetFloat("Speed", 0);
+            animator.SetFloat("MoveX", 0);
+            animator.SetFloat("MoveY", 0);
+            animator.SetFloat("LastMoveX", lastMoveDirection.x);
+            animator.SetFloat("LastMoveY", lastMoveDirection.y);
 
-        animator.SetTrigger("Drink");
+            animator.SetTrigger("Drink");
 
-        yield return new WaitForSeconds(drinkDuration);
-
-        isDrinking = false;
+            yield return new WaitForSeconds(drinkDuration);
+        }
+        finally
+        {
+            // finally đảm bảo cờ luôn được nhả dù có exception hay coroutine bị Stop giữa chừng —
+            // tránh Update() bị kẹt return sớm mãi mãi (đơ toàn bộ input di chuyển).
+            isDrinking = false;
+        }
     }
 
     // PICKUP
@@ -205,21 +212,26 @@ public class PlayerMovement : MonoBehaviour
     {
         isPickingUp = true;
 
-        movement = Vector2.zero;
+        try
+        {
+            movement = Vector2.zero;
 
-        animator.SetFloat("Speed", 0);
-        animator.SetFloat("MoveX", 0);
-        animator.SetFloat("MoveY", 0);
-        animator.SetFloat("LastMoveX", lastMoveDirection.x);
-        animator.SetFloat("LastMoveY", lastMoveDirection.y);
+            animator.SetFloat("Speed", 0);
+            animator.SetFloat("MoveX", 0);
+            animator.SetFloat("MoveY", 0);
+            animator.SetFloat("LastMoveX", lastMoveDirection.x);
+            animator.SetFloat("LastMoveY", lastMoveDirection.y);
 
-        animator.SetTrigger("PickUp");
+            animator.SetTrigger("PickUp");
 
-        yield return new WaitForSeconds(pickUpDuration);
+            yield return new WaitForSeconds(pickUpDuration);
 
-        interactor?.Interact();
-
-        isPickingUp = false;
+            interactor?.Interact();
+        }
+        finally
+        {
+            isPickingUp = false;
+        }
     }
 
     // THROW — gọi từ PlayerAttack khi bấm chuột trái/phải
