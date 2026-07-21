@@ -11,7 +11,7 @@ TagManager:
   - 
   - Water
   - UI
-  - 
+  - Wall
   - 
   - 
   - 
@@ -41,6 +41,14 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Background
+    uniqueID: 456878725
+    locked: 0
+  - name: Gameplay
+    uniqueID: 2892227725
+    locked: 0
+  - name: Player
+    uniqueID: 2956175273
+    locked: 0
   m_RenderingLayers:
   - Default
-  m_MigratedRenderPipelines: []

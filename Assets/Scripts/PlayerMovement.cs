@@ -5,6 +5,10 @@ public class PlayerMovement : MonoBehaviour
 {
     public float moveSpeed = 3f;
 
+    [Header("Âm thanh")]
+    public AudioClip drinkSound;
+    public AudioClip pickUpSound;
+
     // DRINK
     public float drinkDuration = 0.8f;
 
@@ -14,10 +18,17 @@ public class PlayerMovement : MonoBehaviour
     // THROW
     public float throwDuration = 0.5f;
 
+    // KNOCKBACK
+    [Tooltip("Tốc độ tắt dần của lực đẩy lùi (đơn vị/giây)")]
+    public float knockbackDecay = 25f;
+
     private Rigidbody2D rb;
     private Animator animator;
+    private PlayerInteractor interactor;
+    private PlayerInfection infection;
     private Vector2 movement;
     private Vector2 lastMoveDirection = Vector2.down;
+    private Vector2 knockbackVelocity;
 
     // ACTION STATE
     private bool isDrinking = false;
@@ -31,10 +42,17 @@ public class PlayerMovement : MonoBehaviour
     // DEATH
     private bool isDead = false;
 
+    public bool IsDead => isDead;
+    public bool IsThrowing => isThrowing;
+    public bool IsBusy => isDrinking || isPickingUp;
+    public Vector2 LastMoveDirection => lastMoveDirection;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        interactor = GetComponent<PlayerInteractor>();
+        infection = GetComponent<PlayerInfection>();
     }
 
     void Update()
@@ -84,49 +102,70 @@ public class PlayerMovement : MonoBehaviour
         animator.SetFloat("MoveX", movement.x);
         animator.SetFloat("MoveY", movement.y);
         animator.SetFloat("Speed", movement.sqrMagnitude);
-        animator.SetFloat("LastMoveX", lastMoveDirection.x);
-        animator.SetFloat("LastMoveY", lastMoveDirection.y);
 
-        // DRINK
-        // Bấm E để uống nước
-        if (Input.GetKeyDown(KeyCode.E))
+        // Khi đang ném: GIỮ hướng mặt về phía ném (đã set ở TriggerThrow),
+        // không cho hướng di chuyển ghi đè → animation ném không đổi hướng giữa chừng
+        if (!isThrowing)
         {
-            StartCoroutine(DrinkRoutine());
+            animator.SetFloat("LastMoveX", lastMoveDirection.x);
+            animator.SetFloat("LastMoveY", lastMoveDirection.y);
         }
 
-        // PICKUP
-        // Bấm R để nhặt đồ
-        if (Input.GetKeyDown(KeyCode.R))
+        // DRINK / PICKUP
+        // Không cho uống/nhặt khi đang ném (tránh chồng animation)
+        // E và F bấm cùng frame thì ưu tiên E (else if)
+        if (!isThrowing)
         {
-            StartCoroutine(PickUpRoutine());
-        }
-
-        // THROW
-        // Bấm J để ném, vẫn cho di chuyển trong lúc ném
-        if (Input.GetKeyDown(KeyCode.J) && !isThrowing)
-        {
-            StartCoroutine(ThrowRoutine());
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                StartCoroutine(DrinkRoutine());
+            }
+            else if (Input.GetKeyDown(KeyCode.F) && interactor != null && interactor.HasTarget)
+            {
+                StartCoroutine(PickUpRoutine());
+            }
+            else if (Input.GetKeyDown(KeyCode.C) && infection != null && infection.IsInfected && infection.HasCure)
+            {
+                StartCoroutine(CureRoutine());
+            }
         }
     }
 
     void FixedUpdate()
     {
         // DEATH
-        // Khi chết thì đứng yên
+        // Khi chết thì đứng yên tuyệt đối, không bị đẩy trôi
+        if (isDead)
+        {
+            knockbackVelocity = Vector2.zero;
+            rb.linearVelocity = Vector2.zero;
+            return;
+        }
+
+        // ACTION LOCK
+        // Khi đang uống nước hoặc nhặt đồ thì không tự di chuyển,
+        // nhưng vẫn nhận knockback khi bị đánh
+        // Lưu ý: KHÔNG có isThrowing ở đây, vì ném vẫn được di chuyển
+        Vector2 moveVelocity = (isDrinking || isPickingUp)
+            ? Vector2.zero
+            : movement * moveSpeed;
+
+        rb.linearVelocity = moveVelocity + knockbackVelocity;
+
+        knockbackVelocity = Vector2.MoveTowards(
+            knockbackVelocity, Vector2.zero, knockbackDecay * Time.fixedDeltaTime);
+    }
+
+    // KNOCKBACK — gọi từ PlayerHealth khi trúng đòn
+    // Set trực tiếp (không cộng dồn) để bị đánh liên tiếp không văng quá xa
+    public void ApplyKnockback(Vector2 velocity)
+    {
         if (isDead)
         {
             return;
         }
 
-        // ACTION LOCK
-        // Khi đang uống nước hoặc nhặt đồ thì đứng yên
-        // Lưu ý: KHÔNG có isThrowing ở đây, vì ném vẫn được di chuyển
-        if (isDrinking || isPickingUp)
-        {
-            return;
-        }
-
-        rb.MovePosition(rb.position + movement * moveSpeed * Time.fixedDeltaTime);
+        knockbackVelocity = velocity;
     }
 
     // DEATH
@@ -139,6 +178,8 @@ public class PlayerMovement : MonoBehaviour
 
         isDead = true;
         movement = Vector2.zero;
+        knockbackVelocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
 
         animator.SetFloat("Speed", 0);
         animator.SetFloat("MoveX", 0);
@@ -154,19 +195,55 @@ public class PlayerMovement : MonoBehaviour
     {
         isDrinking = true;
 
-        movement = Vector2.zero;
+        try
+        {
+            movement = Vector2.zero;
 
-        animator.SetFloat("Speed", 0);
-        animator.SetFloat("MoveX", 0);
-        animator.SetFloat("MoveY", 0);
-        animator.SetFloat("LastMoveX", lastMoveDirection.x);
-        animator.SetFloat("LastMoveY", lastMoveDirection.y);
+            animator.SetFloat("Speed", 0);
+            animator.SetFloat("MoveX", 0);
+            animator.SetFloat("MoveY", 0);
+            animator.SetFloat("LastMoveX", lastMoveDirection.x);
+            animator.SetFloat("LastMoveY", lastMoveDirection.y);
 
-        animator.SetTrigger("Drink");
+            animator.SetTrigger("Drink");
+            AudioOneShot.Play(drinkSound, transform.position);
 
-        yield return new WaitForSeconds(drinkDuration);
+            yield return new WaitForSeconds(drinkDuration);
+        }
+        finally
+        {
+            // finally đảm bảo cờ luôn được nhả dù có exception hay coroutine bị Stop giữa chừng —
+            // tránh Update() bị kẹt return sớm mãi mãi (đơ toàn bộ input di chuyển).
+            isDrinking = false;
+        }
+    }
 
-        isDrinking = false;
+    // CURE — uống bình thuốc xanh (Boss2 rơi ra) để hết nhiễm độc, phím C
+    IEnumerator CureRoutine()
+    {
+        isDrinking = true;
+
+        try
+        {
+            movement = Vector2.zero;
+
+            animator.SetFloat("Speed", 0);
+            animator.SetFloat("MoveX", 0);
+            animator.SetFloat("MoveY", 0);
+            animator.SetFloat("LastMoveX", lastMoveDirection.x);
+            animator.SetFloat("LastMoveY", lastMoveDirection.y);
+
+            animator.SetTrigger("Drink");
+            AudioOneShot.Play(drinkSound, transform.position);
+
+            yield return new WaitForSeconds(drinkDuration);
+
+            infection?.ConsumeAndCure();
+        }
+        finally
+        {
+            isDrinking = false;
+        }
     }
 
     // PICKUP
@@ -174,36 +251,51 @@ public class PlayerMovement : MonoBehaviour
     {
         isPickingUp = true;
 
-        movement = Vector2.zero;
+        try
+        {
+            movement = Vector2.zero;
 
-        animator.SetFloat("Speed", 0);
-        animator.SetFloat("MoveX", 0);
-        animator.SetFloat("MoveY", 0);
-        animator.SetFloat("LastMoveX", lastMoveDirection.x);
-        animator.SetFloat("LastMoveY", lastMoveDirection.y);
+            animator.SetFloat("Speed", 0);
+            animator.SetFloat("MoveX", 0);
+            animator.SetFloat("MoveY", 0);
+            animator.SetFloat("LastMoveX", lastMoveDirection.x);
+            animator.SetFloat("LastMoveY", lastMoveDirection.y);
 
-        animator.SetTrigger("PickUp");
+            animator.SetTrigger("PickUp");
 
-        yield return new WaitForSeconds(pickUpDuration);
+            yield return new WaitForSeconds(pickUpDuration);
 
-        isPickingUp = false;
+            interactor?.Interact();
+            AudioOneShot.Play(pickUpSound, transform.position);
+        }
+        finally
+        {
+            isPickingUp = false;
+        }
     }
 
-    // THROW
+    // THROW — gọi từ PlayerAttack khi bấm chuột trái/phải
+    // Overload cũ: ném theo hướng đi cuối (giữ tương thích nếu nơi khác còn gọi)
+    public void TriggerThrow() => TriggerThrow(Vector2.zero);
+
+    // aimDir: hướng ném (hướng chuột) — quay mặt nhân vật về đúng phía ném
+    public void TriggerThrow(Vector2 aimDir)
+    {
+        if (isThrowing || isDead || IsBusy) return;
+
+        if (aimDir != Vector2.zero)
+            lastMoveDirection = aimDir;
+
+        StartCoroutine(ThrowRoutine());
+    }
+
     IEnumerator ThrowRoutine()
     {
         isThrowing = true;
-
-        // Không set movement = zero ở đây
-        // Vì ném vẫn được phép di chuyển
-
         animator.SetFloat("LastMoveX", lastMoveDirection.x);
         animator.SetFloat("LastMoveY", lastMoveDirection.y);
-
         animator.SetTrigger("Throw");
-
         yield return new WaitForSeconds(throwDuration);
-
         isThrowing = false;
     }
 }
