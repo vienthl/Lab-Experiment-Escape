@@ -15,6 +15,8 @@ public static class SaveSystem
         public int firePotions;
         public int lightningPotions;
         public int healPotions;
+        public int curePotions;
+        public bool isInfected;
         public List<string> keyIds = new List<string>();
         public string levelReached = "Level1";
     }

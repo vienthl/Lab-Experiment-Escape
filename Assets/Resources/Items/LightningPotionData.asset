@@ -16,4 +16,4 @@ MonoBehaviour:
   displayName: 
   icon: {fileID: -1198480105, guid: b92a02867a98538418682b9c21497d5b, type: 3}
   type: 1
-  amount: 3
+  amount: 10

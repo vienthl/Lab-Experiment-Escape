@@ -21,6 +21,7 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody2D rb;
     private Animator animator;
     private PlayerInteractor interactor;
+    private PlayerInfection infection;
     private Vector2 movement;
     private Vector2 lastMoveDirection = Vector2.down;
     private Vector2 knockbackVelocity;
@@ -47,6 +48,7 @@ public class PlayerMovement : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         interactor = GetComponent<PlayerInteractor>();
+        infection = GetComponent<PlayerInfection>();
     }
 
     void Update()
@@ -117,6 +119,10 @@ public class PlayerMovement : MonoBehaviour
             else if (Input.GetKeyDown(KeyCode.F) && interactor != null && interactor.HasTarget)
             {
                 StartCoroutine(PickUpRoutine());
+            }
+            else if (Input.GetKeyDown(KeyCode.C) && infection != null && infection.IsInfected && infection.HasCure)
+            {
+                StartCoroutine(CureRoutine());
             }
         }
     }
@@ -203,6 +209,33 @@ public class PlayerMovement : MonoBehaviour
         {
             // finally đảm bảo cờ luôn được nhả dù có exception hay coroutine bị Stop giữa chừng —
             // tránh Update() bị kẹt return sớm mãi mãi (đơ toàn bộ input di chuyển).
+            isDrinking = false;
+        }
+    }
+
+    // CURE — uống bình thuốc xanh (Boss2 rơi ra) để hết nhiễm độc, phím C
+    IEnumerator CureRoutine()
+    {
+        isDrinking = true;
+
+        try
+        {
+            movement = Vector2.zero;
+
+            animator.SetFloat("Speed", 0);
+            animator.SetFloat("MoveX", 0);
+            animator.SetFloat("MoveY", 0);
+            animator.SetFloat("LastMoveX", lastMoveDirection.x);
+            animator.SetFloat("LastMoveY", lastMoveDirection.y);
+
+            animator.SetTrigger("Drink");
+
+            yield return new WaitForSeconds(drinkDuration);
+
+            infection?.ConsumeAndCure();
+        }
+        finally
+        {
             isDrinking = false;
         }
     }

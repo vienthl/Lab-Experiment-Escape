@@ -20,6 +20,10 @@ public class GameManager : MonoBehaviour
     [Tooltip("Tên scene gameplay được phép bấm ESC để Pause — mở rộng thêm khi có Level2/3")]
     public string[] pausableScenes = { "Level1" };
 
+    [Header("Test/Debug")]
+    [Tooltip("Bật để test riêng Level2: ép isInfected = true ngay khi GameManager load, không cần chơi lại từ Level1")]
+    public bool forceInfectedOnLoad = false;
+
     public enum GameContext { Fresh, Paused, Dead }
     public GameContext CurrentContext { get; private set; } = GameContext.Fresh;
 
@@ -38,6 +42,9 @@ public class GameManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         SavedData = SaveSystem.Load();
+
+        if (forceInfectedOnLoad)
+            SavedData.isInfected = true;
     }
 
     void Update()
@@ -109,8 +116,14 @@ public class GameManager : MonoBehaviour
             SavedData.firePotions = inventory.firePotions;
             SavedData.lightningPotions = inventory.lightningPotions;
             SavedData.healPotions = inventory.healPotions;
+            SavedData.curePotions = inventory.curePotions;
             SavedData.keyIds = new List<string>(inventory.KeyIds);
         }
+
+        // Xong Level 1 (đánh hạ boss Mr.X) → nhiễm độc nhẹ, giữ trạng thái này sang Level 2
+        // cho tới khi player uống bình cure (PlayerInfection.ConsumeAndCure).
+        if (SceneManager.GetActiveScene().name == "Level1")
+            SavedData.isInfected = true;
 
         SavedData.levelReached = SceneManager.GetActiveScene().name;
         SaveSystem.Save(SavedData);
@@ -143,6 +156,14 @@ public class GameManager : MonoBehaviour
         }
         fadeAlpha = 0f;
         isLevelComplete = false; // sẵn sàng cho lần CompleteLevel kế tiếp (Level2 → Level3...)
+    }
+
+    // Gọi từ PlayerInfection khi player uống bình cure — lưu ngay để chết/thoát game giữa chừng
+    // vẫn không bị nhiễm lại từ đầu.
+    public void SetInfected(bool infected)
+    {
+        SavedData.isInfected = infected;
+        SaveSystem.Save(SavedData);
     }
 
     public void RestartLevel()

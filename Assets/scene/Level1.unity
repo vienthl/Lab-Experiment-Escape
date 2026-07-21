@@ -3198,9 +3198,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f60399f5fa0e31d4797a72ad2bd46f64, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 100
-  animator: {fileID: 0}
-  deathTriggerName: Die
 --- !u!61 &899728337
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -3348,7 +3345,7 @@ SpriteRenderer:
   m_Size: {x: 0.96, y: 0.96}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &899728341
@@ -3379,24 +3376,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b9e161bfa4909648b4698e3f9c49545, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  player: {fileID: 0}
-  detectRange: 6
-  loseRange: 9
-  moveSpeed: 2.5
-  attackRange: 2
-  attackDuration: 0.8
-  attackCooldown: 0.5
-  normalAttackDamagePercent: 0.15
-  attackStateName: BT_Attack
-  hiddenSkillTriggerPercent: 0.3
-  drainRushSpeed: 7
-  drainRange: 1.2
-  drainDuration: 1.2
-  drainDamagePercent: 0.3
-  drainEndDelay: 0.4
-  drainBeam: {fileID: 2093508933}
-  beamStartPoint: {fileID: 0}
-  beamEndPoint: {fileID: 0}
 --- !u!114 &899728343
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3409,13 +3388,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d74dea7b1afc61429fd06748539dafe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  barWidth: 220
-  barHeight: 22
-  topOffset: 24
-  backgroundColor: {r: 0.08, g: 0.08, b: 0.08, a: 0.85}
-  fillColor: {r: 0.75, g: 0.15, b: 0.15, a: 1}
-  lowColor: {r: 1, g: 0.65, b: 0.1, a: 1}
-  lowHealthThreshold: 0.3
 --- !u!1001 &1117853934
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30061,6 +30033,7 @@ GameObject:
   - component: {fileID: 2200000014}
   - component: {fileID: 2200000013}
   - component: {fileID: 2200000012}
+  - component: {fileID: 2200000015}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -30245,7 +30218,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: feda06de4e6a641449a6e8abbac79a8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
-  moveSpeed: 3
+  moveSpeed: 5
   drinkDuration: 0.8
   pickUpDuration: 0.8
   throwDuration: 0.5
@@ -30353,6 +30326,7 @@ MonoBehaviour:
   firePotions: 0
   lightningPotions: 0
   healPotions: 0
+  curePotions: 0
 --- !u!114 &2200000014
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30366,6 +30340,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   interactRadius: 0.6
+--- !u!114 &2200000015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c61484a67e6995240861208d8cb7debb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  infectedTint: {r: 0.29803923, g: 0.8117647, b: 0.22745098, a: 1}
 --- !u!1001 &596561813377073503
 PrefabInstance:
   m_ObjectHideFlags: 0

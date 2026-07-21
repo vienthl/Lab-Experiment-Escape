@@ -10,9 +10,7 @@ public class LockdownRoomController : MonoBehaviour
     public class Wave
     {
         public EnemyHealth[] enemies;
-
-        [Tooltip("Boss (BossHealth) — dùng riêng vì boss không cùng class EnemyHealth, thường đặt ở wave cuối")]
-        public BossHealth[] bosses;
+        public Boss2Health[] bosses;
     }
 
     [Header("Cửa bị khóa cho tới khi xong")]
@@ -157,7 +155,7 @@ public class LockdownRoomController : MonoBehaviour
             ActivateNextWave();
     }
 
-    void HandleBossDied(BossHealth boss)
+    void HandleBossDied(Boss2Health boss)
     {
         boss.OnDied -= HandleBossDied;
         aliveInCurrentWave--;

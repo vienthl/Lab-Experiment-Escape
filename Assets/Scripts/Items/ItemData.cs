@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum ItemType { FirePotion, LightningPotion, HealPotion, KeyCard, LoreNote }
+public enum ItemType { FirePotion, LightningPotion, HealPotion, KeyCard, LoreNote, CurePotion }
 
 [CreateAssetMenu(fileName = "NewItemData", menuName = "Lab Escape/Item Data")]
 public class ItemData : ScriptableObject

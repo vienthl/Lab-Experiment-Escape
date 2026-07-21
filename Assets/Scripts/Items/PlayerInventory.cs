@@ -8,6 +8,7 @@ public class PlayerInventory : MonoBehaviour
     public int firePotions;
     public int lightningPotions;
     public int healPotions;
+    public int curePotions;
 
     readonly List<string> keyIds = new List<string>();
 
@@ -24,6 +25,7 @@ public class PlayerInventory : MonoBehaviour
         firePotions = saved.firePotions;
         lightningPotions = saved.lightningPotions;
         healPotions = saved.healPotions;
+        curePotions = saved.curePotions;
         keyIds.Clear();
         keyIds.AddRange(saved.keyIds);
 
@@ -44,6 +46,9 @@ public class PlayerInventory : MonoBehaviour
                 break;
             case ItemType.HealPotion:
                 healPotions += quantity;
+                break;
+            case ItemType.CurePotion:
+                curePotions += quantity;
                 break;
             case ItemType.KeyCard:
                 if (!string.IsNullOrEmpty(data.id) && !keyIds.Contains(data.id))
@@ -74,6 +79,10 @@ public class PlayerInventory : MonoBehaviour
             case ItemType.HealPotion:
                 if (healPotions < quantity) return false;
                 healPotions -= quantity;
+                break;
+            case ItemType.CurePotion:
+                if (curePotions < quantity) return false;
+                curePotions -= quantity;
                 break;
             default:
                 return false;

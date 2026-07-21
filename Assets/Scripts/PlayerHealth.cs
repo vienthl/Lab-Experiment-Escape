@@ -85,6 +85,15 @@ public class PlayerHealth : MonoBehaviour
         StartFlash();
     }
 
+    // Đổi màu áo "nền" của Player — dùng cho hiệu ứng nhiễm độc (PlayerInfection).
+    // Tương thích với FlashRoutine: baseColor là màu được flash trả về sau mỗi lần trúng đòn.
+    public void SetBaseTint(Color tint)
+    {
+        baseColor = tint;
+        if (spriteRenderer != null && flashRoutine == null)
+            spriteRenderer.color = baseColor;
+    }
+
     public void Heal(float amount)
     {
         if (IsDead || amount <= 0f) return;
