@@ -88,11 +88,21 @@ public class GameManager : MonoBehaviour
 
     // Gọi từ GameOverUI khi player chết và bấm phím xác nhận — thay Level1 bằng MainMenu hẳn
     // (không cần giữ state cũ vì đã thua), nút PLAY sẽ tự đổi label thành "RESTART".
+    // Chết = thua ván đó → xóa luôn máu/số bình đã tích lũy, RESTART sẽ bắt đầu lại từ đầu sạch sẽ.
     public void NotifyPlayerDied()
     {
         CurrentContext = GameContext.Dead;
         Time.timeScale = 1f;
+        ResetProgress();
         SceneManager.LoadScene("MainMenu");
+    }
+
+    // Xóa hẳn tiến trình đã lưu (máu, số bình, nhiễm độc, keycard...) về mặc định.
+    // Gọi khi player chết (NotifyPlayerDied) hoặc lúc Intro chạy lại từ đầu (New Game thật sự).
+    public void ResetProgress()
+    {
+        SavedData = new SaveSystem.SaveData();
+        SaveSystem.Save(SavedData);
     }
 
     // MainMenuController gọi ngay sau khi đã đọc context để hiện đúng label —
@@ -119,6 +129,10 @@ public class GameManager : MonoBehaviour
             SavedData.curePotions = inventory.curePotions;
             SavedData.keyIds = new List<string>(inventory.KeyIds);
         }
+
+        var playerHealth = FindFirstObjectByType<PlayerHealth>();
+        if (playerHealth != null)
+            SavedData.currentHealth = playerHealth.CurrentHealth;
 
         // Xong Level 1 (đánh hạ boss Mr.X) → nhiễm độc nhẹ, giữ trạng thái này sang Level 2
         // cho tới khi player uống bình cure (PlayerInfection.ConsumeAndCure).

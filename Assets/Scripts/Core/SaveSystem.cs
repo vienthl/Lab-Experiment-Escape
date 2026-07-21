@@ -17,11 +17,20 @@ public static class SaveSystem
         public int healPotions;
         public int curePotions;
         public bool isInfected;
+
+        // Máu Player lúc hoàn thành level gần nhất. -1 = chưa từng lưu (level đầu tiên) → PlayerHealth tự dùng maxHealth.
+        public float currentHealth = -1f;
         public List<string> keyIds = new List<string>();
         public string levelReached = "Level1";
     }
 
     public static bool Exists() => File.Exists(SavePath);
+
+    // Xóa tiến trình về mặc định — dùng khi player chết (Restart) hoặc bắt đầu lại từ Intro (New Game).
+    public static void ResetSave()
+    {
+        Save(new SaveData());
+    }
 
     public static void Save(SaveData data)
     {

@@ -118,15 +118,15 @@ public class PlayerMovement : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.E))
             {
-                StartCoroutine(DrinkRoutine());
+                // Đang nhiễm độc + có bình cure → ưu tiên uống cure để chữa; không thì uống bình hồi máu như bình thường.
+                if (infection != null && infection.IsInfected && infection.HasCure)
+                    StartCoroutine(CureRoutine());
+                else
+                    StartCoroutine(DrinkRoutine());
             }
             else if (Input.GetKeyDown(KeyCode.F) && interactor != null && interactor.HasTarget)
             {
                 StartCoroutine(PickUpRoutine());
-            }
-            else if (Input.GetKeyDown(KeyCode.C) && infection != null && infection.IsInfected && infection.HasCure)
-            {
-                StartCoroutine(CureRoutine());
             }
         }
     }

@@ -35,6 +35,11 @@ public class EnemyHealth : MonoBehaviour
     public AudioClip hitSound;
     public AudioClip deathSound;
 
+    [Header("Hồi máu Player khi diệt được quái này")]
+    [Range(0f, 1f)]
+    [Tooltip("% máu tối đa của Player được hồi mỗi khi quái này chết (mặc định 3%)")]
+    public float healPlayerOnKillPercent = 0.03f;
+
     float currentHealth;
     WorldHealthBar healthBar;
 
@@ -119,6 +124,13 @@ public class EnemyHealth : MonoBehaviour
     {
         AudioOneShot.Play(deathSound, transform.position);
         OnDied?.Invoke(this);
+
+        if (healPlayerOnKillPercent > 0f)
+        {
+            var playerHealth = GameObject.FindGameObjectWithTag("Player")?.GetComponent<PlayerHealth>();
+            if (playerHealth != null && !playerHealth.IsDead)
+                playerHealth.Heal(playerHealth.MaxHealth * healPlayerOnKillPercent);
+        }
 
         if (lootPrefab != null && UnityEngine.Random.value <= dropChance)
             Instantiate(lootPrefab, transform.position, Quaternion.identity);

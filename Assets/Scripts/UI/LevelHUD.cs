@@ -15,6 +15,7 @@ public class LevelHUD : MonoBehaviour
     public Color warningColor = new Color(0.95f, 0.35f, 0.2f, 1f);
 
     PlayerInventory inventory;
+    PlayerInfection infection;
     LockdownRoomController lockdown;
     Texture2D bgTex;
     GUIStyle textStyle;
@@ -23,6 +24,7 @@ public class LevelHUD : MonoBehaviour
     void Awake()
     {
         inventory = GetComponent<PlayerInventory>();
+        infection = GetComponent<PlayerInfection>();
         lockdown = FindFirstObjectByType<LockdownRoomController>();
         bgTex = MakeTex(backgroundColor);
     }
@@ -36,7 +38,8 @@ public class LevelHUD : MonoBehaviour
         textStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 16, normal = { textColor = textColor } };
         warningStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 16, fontStyle = FontStyle.Bold, normal = { textColor = warningColor } };
 
-        int lineCount = lockdown != null && !lockdown.IsCleared ? 3 : 1;
+        bool showInfected = infection != null && infection.IsInfected;
+        int lineCount = 1 + (showInfected ? 1 : 0) + (lockdown != null && !lockdown.IsCleared ? 2 : 0);
         float lineHeight = 22f;
         float panelHeight = lineCount * lineHeight + 10f;
 
@@ -44,8 +47,16 @@ public class LevelHUD : MonoBehaviour
 
         float y = panelY + 5f;
         GUI.Label(new Rect(panelX + 8f, y, panelWidth - 16f, lineHeight),
-            $"Lửa: {inventory.firePotions}   Điện: {inventory.lightningPotions}   Hồi máu: {inventory.healPotions}",
+            $"Lửa: {inventory.firePotions}   Điện: {inventory.lightningPotions}   Hồi máu: {inventory.healPotions}   Cure: {inventory.curePotions}",
             textStyle);
+
+        if (showInfected)
+        {
+            y += lineHeight;
+            GUI.Label(new Rect(panelX + 8f, y, panelWidth - 16f, lineHeight),
+                "NHIỄM ĐỘC (bấm C để chữa)",
+                warningStyle);
+        }
 
         if (lockdown != null && !lockdown.IsCleared)
         {

@@ -168,3 +168,4 @@ MonoBehaviour:
   potionType: 1
   hitEffectPrefab: {fileID: 1121607241013511682, guid: 6f1d29d48adfbcb4eb74e7e24f4f8e78, type: 3}
   maxRange: 18
+  impactSound: {fileID: 8300000, guid: 114236deb4f94cc43af393a49a567b4d, type: 3}

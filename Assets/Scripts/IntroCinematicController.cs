@@ -68,6 +68,14 @@ public class IntroCinematicController : MonoBehaviour
     void Awake()
     {
         Time.timeScale = 1f;
+
+        // Vào Intro nghĩa là bắt đầu 1 lượt chơi mới hoàn toàn — xóa sạch save cũ (máu, số bình,
+        // nhiễm độc...) để MainMenu/Level1 sau đó không lỡ kế thừa tiến trình của lần chơi trước.
+        if (GameManager.Instance != null)
+            GameManager.Instance.ResetProgress();
+        else
+            SaveSystem.ResetSave();
+
         startedAt = Time.unscaledTime;
         EnsureCamera();
         BuildPresentation();

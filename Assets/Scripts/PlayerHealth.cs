@@ -36,7 +36,13 @@ public class PlayerHealth : MonoBehaviour
     {
         movement       = GetComponent<PlayerMovement>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        currentHealth  = maxHealth;
+
+        // Máu mang từ level trước sang (lưu lúc GameManager.CompleteLevel) — level đầu tiên
+        // (currentHealth lưu = -1, chưa từng lưu) thì vẫn vào đầy máu như cũ.
+        var saved = GameManager.Instance != null ? GameManager.Instance.SavedData : null;
+        currentHealth = (saved != null && saved.currentHealth > 0f)
+            ? Mathf.Min(saved.currentHealth, maxHealth)
+            : maxHealth;
 
         if (spriteRenderer != null)
             baseColor = spriteRenderer.color;
