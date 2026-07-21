@@ -25,6 +25,12 @@ public class Boss2Health : MonoBehaviour
     [Tooltip("Chỉ rơi bình cure nếu lockdown phòng CÒN thời gian (chưa hết giờ). Không tìm thấy LockdownRoomController thì mặc định coi như còn thời gian.")]
     public bool onlyDropIfTimeRemaining = true;
 
+    [Header("Âm thanh")]
+    public AudioClip hitSound;
+    public AudioClip deathSound;
+    [Tooltip("Phát 1 lần khi máu xuống mốc kích hoạt vùng tối (vd sting/gầm báo hiệu đổi pha)")]
+    public AudioClip visionTriggerSound;
+
     float currentHealth;
     bool visionLimitTriggered;
 
@@ -45,12 +51,14 @@ public class Boss2Health : MonoBehaviour
         if (IsDead || amount <= 0f) return;
 
         currentHealth = Mathf.Max(0f, currentHealth - amount);
+        AudioOneShot.Play(hitSound, transform.position);
         OnDamaged?.Invoke(this);
 
         if (!visionLimitTriggered && HealthPercent <= visionLimitThreshold)
         {
             visionLimitTriggered = true;
             VisionLimiter.Instance?.Activate();
+            AudioOneShot.Play(visionTriggerSound, transform.position);
         }
 
         if (IsDead) Die();
@@ -58,6 +66,7 @@ public class Boss2Health : MonoBehaviour
 
     void Die()
     {
+        AudioOneShot.Play(deathSound, transform.position);
         OnDied?.Invoke(this);
 
         if (curePotionPrefab != null && ShouldDropCure())

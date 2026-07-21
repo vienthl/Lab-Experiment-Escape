@@ -31,6 +31,10 @@ public class EnemyHealth : MonoBehaviour
     [Tooltip("Xác suất rơi đồ mỗi lần chết")]
     public float dropChance = 0.3f;
 
+    [Header("Âm thanh")]
+    public AudioClip hitSound;
+    public AudioClip deathSound;
+
     float currentHealth;
     WorldHealthBar healthBar;
 
@@ -91,6 +95,7 @@ public class EnemyHealth : MonoBehaviour
 
         currentHealth = Mathf.Max(0f, currentHealth - amount);
         RefreshBar();
+        AudioOneShot.Play(hitSound, transform.position);
         OnDamaged?.Invoke(this);
 
         if (IsDead) Die();
@@ -112,6 +117,7 @@ public class EnemyHealth : MonoBehaviour
 
     void Die()
     {
+        AudioOneShot.Play(deathSound, transform.position);
         OnDied?.Invoke(this);
 
         if (lootPrefab != null && UnityEngine.Random.value <= dropChance)

@@ -11,6 +11,9 @@ public class GameOverUI : MonoBehaviour
     [Header("Thời gian trễ trước khi hiện (giây)")]
     public float showDelay = 0.8f;
 
+    [Header("Âm thanh")]
+    public AudioClip gameOverSound;
+
     PlayerHealth playerHealth;
     Texture2D    overlayTex;
     GUIStyle     titleStyle;
@@ -33,6 +36,7 @@ public class GameOverUI : MonoBehaviour
         {
             isDead = true;
             diedAt = Time.time;
+            AudioOneShot.Play(gameOverSound, transform.position);
         }
 
         if (isDead && IsVisible() && Input.GetKeyDown(KeyCode.R))

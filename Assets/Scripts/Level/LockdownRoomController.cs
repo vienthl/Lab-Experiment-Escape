@@ -30,6 +30,15 @@ public class LockdownRoomController : MonoBehaviour
     public UnityEvent onTimeExpired;
     public UnityEvent onAllWavesCleared;
 
+    [Header("Hết giờ → tự chuyển scene (vd BadEnding, để trống = không tự chuyển)")]
+    [Tooltip("Gọi thẳng GameManager.Instance.LoadLevel(...) trong code — không dùng UnityEvent kéo-thả vì GameManager là singleton DontDestroyOnLoad, không có instance cố định trong scene để gán tay")]
+    public string sceneOnTimeExpired = "";
+
+    [Header("Âm thanh")]
+    public AudioClip waveStartSound;
+    public AudioClip allClearSound;
+    public AudioClip timeExpiredSound;
+
     int currentWaveIndex = -1;
     int aliveInCurrentWave;
     float remainingTime;
@@ -78,7 +87,11 @@ public class LockdownRoomController : MonoBehaviour
         {
             remainingTime = 0f;
             timeExpiredFired = true;
+            AudioOneShot.Play(timeExpiredSound, transform.position);
             onTimeExpired?.Invoke();
+
+            if (!string.IsNullOrEmpty(sceneOnTimeExpired))
+                GameManager.Instance?.LoadLevel(sceneOnTimeExpired);
         }
     }
 
@@ -144,6 +157,8 @@ public class LockdownRoomController : MonoBehaviour
         // Wave rỗng (designer để trống) — coi như xong ngay, qua wave kế.
         if (aliveInCurrentWave == 0)
             ActivateNextWave();
+        else
+            AudioOneShot.Play(waveStartSound, transform.position);
     }
 
     void HandleEnemyDied(EnemyHealth enemy)
@@ -173,6 +188,7 @@ public class LockdownRoomController : MonoBehaviour
             if (door != null) door.SetLocked(false);
         }
 
+        AudioOneShot.Play(allClearSound, transform.position);
         onAllWavesCleared?.Invoke();
     }
 }

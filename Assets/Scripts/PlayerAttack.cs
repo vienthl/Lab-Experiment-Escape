@@ -20,6 +20,9 @@ public class PlayerAttack : MonoBehaviour
     [Tooltip("Scale bình khi spawn — chỉnh cho khớp kích thước nhân vật")]
     public float projectileScale = 0.35f;
 
+    [Header("Âm thanh")]
+    public AudioClip throwSound;
+
     PlayerMovement movement;
     PlayerHealth   health;
     PlayerInventory inventory;
@@ -84,6 +87,7 @@ public class PlayerAttack : MonoBehaviour
 
         go.GetComponent<Projectile>()?.Launch(dir, projectileSpeed);
         movement?.TriggerThrow(dir);
+        AudioOneShot.Play(throwSound, transform.position);
         lastThrowTime = Time.time;
     }
 }

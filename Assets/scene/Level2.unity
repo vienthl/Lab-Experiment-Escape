@@ -1592,7 +1592,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   watchedDoor: {fileID: 0}
-  nextSceneName: MainMenu
+  nextSceneName: HappyEnding
+  requireCured: 0
 --- !u!1 &511879903
 GameObject:
   m_ObjectHideFlags: 0
@@ -9081,6 +9082,7 @@ MonoBehaviour:
   onAllWavesCleared:
     m_PersistentCalls:
       m_Calls: []
+  sceneOnTimeExpired: BadEnding
 --- !u!4 &1494858432
 Transform:
   m_ObjectHideFlags: 0

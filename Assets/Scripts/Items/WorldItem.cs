@@ -16,6 +16,9 @@ public class WorldItem : MonoBehaviour
     [Header("Highlight khi player đứng gần")]
     public Color highlightColor = new Color(1f, 0.95f, 0.6f, 1f);
 
+    [Header("Âm thanh")]
+    public AudioClip collectSound;
+
     Vector3 basePos;
     SpriteRenderer spriteRenderer;
     Color baseColor = Color.white;
@@ -47,6 +50,7 @@ public class WorldItem : MonoBehaviour
     {
         quantity = Quantity;
         var data = itemData;
+        AudioOneShot.Play(collectSound, transform.position);
         Destroy(gameObject);
         return data;
     }

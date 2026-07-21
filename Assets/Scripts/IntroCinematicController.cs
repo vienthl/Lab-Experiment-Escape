@@ -18,6 +18,8 @@ public class IntroCinematicController : MonoBehaviour
     [Header("Audio")]
     [SerializeField] AudioClip introMusic;
     [SerializeField, Range(0f, 1f)] float musicVolume = 0.55f;
+    [SerializeField] AudioClip typewriterBeep;
+    [SerializeField] AudioClip panelTransitionSound;
 
     [Header("Ảnh nền camera an ninh (để trống = dùng nền màu như cũ)")]
     [SerializeField] Sprite logoBackdrop;
@@ -279,6 +281,7 @@ public class IntroCinematicController : MonoBehaviour
     {
         isTransitioning = true;
         flashOverlay.color = new Color(teal.r, teal.g, teal.b, 0.08f);
+        AudioOneShot.Play(panelTransitionSound, transform.position);
         yield return Fade(panels[currentPanel], 1f, 0f, 0.18f);
 
         currentPanel = nextPanel;
@@ -324,6 +327,9 @@ public class IntroCinematicController : MonoBehaviour
             textComponent.text = fullText.Substring(0, i + 1);
 
             char c = fullText[i];
+            if (!char.IsWhiteSpace(c))
+                AudioOneShot.Play(typewriterBeep, transform.position, 0.5f);
+
             float delay = baseDelay;
             if (c == '\n') delay += 0.25f;      // ngắt dòng — dừng lâu hơn 1 nhịp
             else if (c == '.') delay += 0.12f;  // hết câu — dừng thêm chút

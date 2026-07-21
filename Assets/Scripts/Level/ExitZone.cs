@@ -10,10 +10,19 @@ public class ExitZone : MonoBehaviour
     [Tooltip("Tên scene sẽ load sau khi qua cửa này (vd Level2, Level3, MainMenu...)")]
     public string nextSceneName = "MainMenu";
 
+    [Tooltip("Bật nếu cửa này chỉ cho qua khi Player đã hết nhiễm độc (vd Door_Extrance ở Level2 dẫn tới Happy Ending)")]
+    public bool requireCured = false;
+
     void OnTriggerEnter2D(Collider2D other)
     {
         if (!other.CompareTag("Player")) return;
         if (watchedDoor != null && !watchedDoor.IsOpen) return;
+
+        if (requireCured)
+        {
+            var infection = other.GetComponent<PlayerInfection>();
+            if (infection != null && infection.IsInfected) return; // còn nhiễm độc — chưa được ra
+        }
 
         GameManager.Instance?.CompleteLevel(nextSceneName);
     }

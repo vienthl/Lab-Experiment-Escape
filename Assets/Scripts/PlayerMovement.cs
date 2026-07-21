@@ -5,6 +5,10 @@ public class PlayerMovement : MonoBehaviour
 {
     public float moveSpeed = 3f;
 
+    [Header("Âm thanh")]
+    public AudioClip drinkSound;
+    public AudioClip pickUpSound;
+
     // DRINK
     public float drinkDuration = 0.8f;
 
@@ -202,6 +206,7 @@ public class PlayerMovement : MonoBehaviour
             animator.SetFloat("LastMoveY", lastMoveDirection.y);
 
             animator.SetTrigger("Drink");
+            AudioOneShot.Play(drinkSound, transform.position);
 
             yield return new WaitForSeconds(drinkDuration);
         }
@@ -229,6 +234,7 @@ public class PlayerMovement : MonoBehaviour
             animator.SetFloat("LastMoveY", lastMoveDirection.y);
 
             animator.SetTrigger("Drink");
+            AudioOneShot.Play(drinkSound, transform.position);
 
             yield return new WaitForSeconds(drinkDuration);
 
@@ -260,6 +266,7 @@ public class PlayerMovement : MonoBehaviour
             yield return new WaitForSeconds(pickUpDuration);
 
             interactor?.Interact();
+            AudioOneShot.Play(pickUpSound, transform.position);
         }
         finally
         {

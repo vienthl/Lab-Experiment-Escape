@@ -16,6 +16,10 @@ public class PlayerHealth : MonoBehaviour
     [Tooltip("Nhịp nhấp nháy sprite khi bất tử (giây)")]
     public float flashInterval = 0.08f;
 
+    [Header("Âm thanh")]
+    public AudioClip hurtSound;
+    public AudioClip deathSound;
+
     float currentHealth;
     float lastHitTime = -999f;
     PlayerMovement movement;
@@ -53,6 +57,7 @@ public class PlayerHealth : MonoBehaviour
 
         lastHitTime   = Time.time;
         currentHealth = Mathf.Max(0f, currentHealth - amount);
+        AudioOneShot.Play(hurtSound, transform.position);
 
         if (IsDead)
         {
@@ -75,6 +80,7 @@ public class PlayerHealth : MonoBehaviour
         if (IsDead || amount <= 0f) return;
 
         currentHealth = Mathf.Max(0f, currentHealth - amount);
+        AudioOneShot.Play(hurtSound, transform.position);
 
         if (IsDead)
         {
@@ -135,6 +141,8 @@ public class PlayerHealth : MonoBehaviour
 
     void Die()
     {
+        AudioOneShot.Play(deathSound, transform.position);
+
         // Trả sprite về màu gốc để animation chết không bị kẹt alpha
         if (flashRoutine != null)
         {

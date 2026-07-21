@@ -14,6 +14,9 @@ public class Projectile : MonoBehaviour
     [Header("Tầm bay")]
     public float maxRange = 18f;
 
+    [Header("Âm thanh khi trúng đích")]
+    public AudioClip impactSound;
+
     Rigidbody2D rb;
     Vector2 startPos;
 
@@ -66,6 +69,8 @@ public class Projectile : MonoBehaviour
 
         if (hitEffectPrefab != null)
             Instantiate(hitEffectPrefab, transform.position, Quaternion.identity);
+
+        AudioOneShot.Play(impactSound, transform.position);
 
         Destroy(gameObject);
     }

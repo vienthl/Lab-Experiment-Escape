@@ -25,6 +25,9 @@ public class Boss2AI : MonoBehaviour
     [Header("Va chạm")]
     public LayerMask wallLayer;
 
+    [Header("Âm thanh")]
+    public AudioClip attackSound;
+
     Rigidbody2D rb;
     Animator animator;
     Collider2D bodyCollider;
@@ -150,5 +153,6 @@ public class Boss2AI : MonoBehaviour
 
         lastAttackTime = Time.time;
         animator?.SetTrigger("Attack");
+        AudioOneShot.Play(attackSound, transform.position);
     }
 }
