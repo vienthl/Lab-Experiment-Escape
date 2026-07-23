@@ -18,14 +18,26 @@ public class PlayerHealth : MonoBehaviour
 
     [Header("Âm thanh")]
     public AudioClip hurtSound;
+    [Range(0f, 1f)] public float hurtVolume = 1f;
     public AudioClip deathSound;
+    [Range(0f, 1f)] public float deathVolume = 1f;
+
+    [Header("Thở gấp khi máu thấp")]
+    [Tooltip("Để trống = không có tiếng thở")]
+    public AudioClip lowHealthBreathing;
+    [Range(0f, 1f)] public float lowHealthBreathVolume = 1f;
+    [Range(0f, 1f)]
+    [Tooltip("Máu xuống dưới % này thì bắt đầu thở gấp — khớp mốc lowHealthThreshold của PlayerHealthUI")]
+    public float lowHealthBreathThreshold = 0.35f;
 
     float currentHealth;
     float lastHitTime = -999f;
     PlayerMovement movement;
+    PlayerShield shield;
     SpriteRenderer spriteRenderer;
     Coroutine flashRoutine;
     Color baseColor = Color.white;
+    AudioSource breathSource;
 
     public float CurrentHealth => currentHealth;
     public float MaxHealth     => maxHealth; // alias viết hoa — TestBoss.cs (Mr.X) của Anh Huy dùng tên này
@@ -35,6 +47,7 @@ public class PlayerHealth : MonoBehaviour
     void Awake()
     {
         movement       = GetComponent<PlayerMovement>();
+        shield         = GetComponent<PlayerShield>();
         spriteRenderer = GetComponent<SpriteRenderer>();
 
         // Máu mang từ level trước sang (lưu lúc GameManager.CompleteLevel) — level đầu tiên
@@ -46,6 +59,28 @@ public class PlayerHealth : MonoBehaviour
 
         if (spriteRenderer != null)
             baseColor = spriteRenderer.color;
+
+        if (lowHealthBreathing != null)
+        {
+            breathSource = gameObject.AddComponent<AudioSource>();
+            breathSource.clip = lowHealthBreathing;
+            breathSource.volume = lowHealthBreathVolume;
+            breathSource.loop = true;
+            breathSource.playOnAwake = false;
+        }
+    }
+
+    // Bật/tắt tiếng thở gấp theo mốc máu thấp — chỉ chạy nếu có gán clip (breathSource != null)
+    void Update()
+    {
+        if (breathSource == null) return;
+
+        bool shouldBreathe = !IsDead && HealthPercent > 0f && HealthPercent <= lowHealthBreathThreshold;
+
+        if (shouldBreathe && !breathSource.isPlaying)
+            breathSource.Play();
+        else if (!shouldBreathe && breathSource.isPlaying)
+            breathSource.Stop();
     }
 
     public void TakeDamage(float amount)
@@ -58,12 +93,15 @@ public class PlayerHealth : MonoBehaviour
     {
         if (IsDead || amount <= 0f) return;
 
+        // KHIÊN: đang bật thì miễn nhiễm tuyệt đối, không tính cả knockback/flash
+        if (shield != null && shield.IsShieldActive) return;
+
         // I-FRAME: đang bất tử thì bỏ qua đòn đánh
         if (Time.time - lastHitTime < invincibilityDuration) return;
 
         lastHitTime   = Time.time;
         currentHealth = Mathf.Max(0f, currentHealth - amount);
-        AudioOneShot.Play(hurtSound, transform.position);
+        AudioOneShot.Play(hurtSound, transform.position, hurtVolume);
 
         if (IsDead)
         {
@@ -86,7 +124,7 @@ public class PlayerHealth : MonoBehaviour
         if (IsDead || amount <= 0f) return;
 
         currentHealth = Mathf.Max(0f, currentHealth - amount);
-        AudioOneShot.Play(hurtSound, transform.position);
+        AudioOneShot.Play(hurtSound, transform.position, hurtVolume);
 
         if (IsDead)
         {
@@ -147,7 +185,10 @@ public class PlayerHealth : MonoBehaviour
 
     void Die()
     {
-        AudioOneShot.Play(deathSound, transform.position);
+        AudioOneShot.Play(deathSound, transform.position, deathVolume);
+
+        if (breathSource != null && breathSource.isPlaying)
+            breathSource.Stop();
 
         // Trả sprite về màu gốc để animation chết không bị kẹt alpha
         if (flashRoutine != null)

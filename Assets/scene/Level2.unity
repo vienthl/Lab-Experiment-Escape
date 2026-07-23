@@ -1613,8 +1613,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   blockCollider: {fileID: 0}
-  openSound: {fileID: 0}
-  closeSound: {fileID: 0}
+  openSound: {fileID: 8300000, guid: c78a0f9fdca66a6469f302a39bed35f5, type: 3}
+  openVolume: 1
+  closeSound: {fileID: 8300000, guid: 766ba7bee9f7e954fb33075a978d1bdf, type: 3}
+  closeVolume: 1
 --- !u!95 &492758542
 Animator:
   serializedVersion: 7
@@ -1651,7 +1653,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   watchedDoor: {fileID: 0}
   nextSceneName: HappyEnding
-  requireCured: 0
+  requireCured: 1
 --- !u!1 &511879903
 GameObject:
   m_ObjectHideFlags: 0
@@ -4037,6 +4039,18 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -3053054802133927907, guid: c5c6419857a7bdf47bb402ffb09cc8e6, type: 3}
+      propertyPath: shootSound
+      value: 
+      objectReference: {fileID: 8300000, guid: 9e248c7ea4acb964ca6817587ac81358, type: 3}
+    - target: {fileID: -3053054802133927907, guid: c5c6419857a7bdf47bb402ffb09cc8e6, type: 3}
+      propertyPath: attackSound
+      value: 
+      objectReference: {fileID: 8300000, guid: 59c189ef75af3a140a5f17f518338a9a, type: 3}
+    - target: {fileID: -3053054802133927907, guid: c5c6419857a7bdf47bb402ffb09cc8e6, type: 3}
+      propertyPath: projectilePrefab
+      value: 
+      objectReference: {fileID: 3865436803462307324, guid: ad201f1f2c0681b4483f7ce0942ced78, type: 3}
+    - target: {fileID: -3053054802133927907, guid: c5c6419857a7bdf47bb402ffb09cc8e6, type: 3}
       propertyPath: wallLayer.m_Bits
       value: 64
       objectReference: {fileID: 0}
@@ -4084,6 +4098,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Boss2
       objectReference: {fileID: 0}
+    - target: {fileID: 7770000956363484673, guid: c5c6419857a7bdf47bb402ffb09cc8e6, type: 3}
+      propertyPath: hitSound
+      value: 
+      objectReference: {fileID: 8300000, guid: 27e666d2911eb484aa9f9bbcda79cbb8, type: 3}
+    - target: {fileID: 7770000956363484673, guid: c5c6419857a7bdf47bb402ffb09cc8e6, type: 3}
+      propertyPath: deathSound
+      value: 
+      objectReference: {fileID: 8300000, guid: fca23ae135702cb46bbc475d12854cde, type: 3}
     - target: {fileID: 7770000956363484673, guid: c5c6419857a7bdf47bb402ffb09cc8e6, type: 3}
       propertyPath: curePotionPrefab
       value: 
@@ -4303,6 +4325,7 @@ GameObject:
   - component: {fileID: 861044401}
   - component: {fileID: 861044400}
   - component: {fileID: 861044404}
+  - component: {fileID: 861044405}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -4415,6 +4438,28 @@ SpriteRenderer:
   m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!95 &861044405
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 861044399}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 559b1e2fbc9d70749a6eb6826fb660ef, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &873859944
 GameObject:
   m_ObjectHideFlags: 0
@@ -9201,6 +9246,7 @@ MonoBehaviour:
     - {fileID: 1267168530}
     - {fileID: 319963344}
     bosses: []
+    mrXBosses: []
   - enemies:
     - {fileID: 1139791227}
     - {fileID: 1622212505}
@@ -9209,9 +9255,11 @@ MonoBehaviour:
     - {fileID: 1781082799}
     - {fileID: 1476928706}
     bosses: []
+    mrXBosses: []
   - enemies: []
     bosses:
     - {fileID: 829954395}
+    mrXBosses: []
   autoStartOnLevelLoad: 1
   timeLimit: 420
   onTimeExpired:
@@ -9222,8 +9270,11 @@ MonoBehaviour:
       m_Calls: []
   sceneOnTimeExpired: BadEnding
   waveStartSound: {fileID: 0}
+  waveStartVolume: 1
   allClearSound: {fileID: 0}
+  allClearVolume: 1
   timeExpiredSound: {fileID: 0}
+  timeExpiredVolume: 1
 --- !u!4 &1494858432
 Transform:
   m_ObjectHideFlags: 0
@@ -9316,52 +9367,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!1 &1541976586
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1541976588}
-  - component: {fileID: 1541976587}
-  m_Layer: 0
-  m_Name: VisionLimiter
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1541976587
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1541976586}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ec91f2f76d3b43840b05548d248f3e02, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  visionRadius: 50
-  innerFraction: 0.05
---- !u!4 &1541976588
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1541976586}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1622212505 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 140180419890120627, guid: 96e257e80353bd842a98710aa7a12d6e, type: 3}
@@ -9752,8 +9757,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   blockCollider: {fileID: 1728567567}
-  openSound: {fileID: 0}
-  closeSound: {fileID: 0}
+  openSound: {fileID: 8300000, guid: c78a0f9fdca66a6469f302a39bed35f5, type: 3}
+  openVolume: 1
+  closeSound: {fileID: 8300000, guid: 766ba7bee9f7e954fb33075a978d1bdf, type: 3}
+  closeVolume: 1
 --- !u!61 &1728567571
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -50145,6 +50152,9 @@ GameObject:
   - component: {fileID: 2200000012}
   - component: {fileID: 2200000015}
   - component: {fileID: 2200000016}
+  - component: {fileID: 2200000017}
+  - component: {fileID: 2200000018}
+  - component: {fileID: 2200000019}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -50331,7 +50341,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   moveSpeed: 5
   drinkSound: {fileID: 8300000, guid: a569175e1c27dc844b8b5737ffb520de, type: 3}
+  drinkVolume: 1
   pickUpSound: {fileID: 8300000, guid: 0d3ec9c6a5818dc4ea4c92646b09ad22, type: 3}
+  pickUpVolume: 1
+  footstepLoop: {fileID: 8300000, guid: d9581d15d70ac2b4c81ce76d4d57dfe4, type: 3}
+  footstepVolume: 0.6
   drinkDuration: 0.8
   pickUpDuration: 0.8
   throwDuration: 0.5
@@ -50373,7 +50387,12 @@ MonoBehaviour:
   knockbackForce: 7
   flashInterval: 0.08
   hurtSound: {fileID: 8300000, guid: c7afcf0706c2d3447935b0df976b78f9, type: 3}
+  hurtVolume: 1
   deathSound: {fileID: 8300000, guid: fca23ae135702cb46bbc475d12854cde, type: 3}
+  deathVolume: 1
+  lowHealthBreathing: {fileID: 8300000, guid: f2a9350b60df48b41901760441bfd065, type: 3}
+  lowHealthBreathVolume: 0.2
+  lowHealthBreathThreshold: 0.35
 --- !u!114 &2200000010
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -50393,6 +50412,7 @@ MonoBehaviour:
   spawnOffset: 0.4
   projectileScale: 0.35
   throwSound: {fileID: 8300000, guid: 024c116e4319d6e4aba8ca55c3dd7ef8, type: 3}
+  throwVolume: 1
 --- !u!114 &2200000011
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -50410,6 +50430,7 @@ MonoBehaviour:
   subtitleColor: {r: 1, g: 1, b: 1, a: 0.9}
   showDelay: 0.8
   gameOverSound: {fileID: 8300000, guid: 0661265adad44814ea025b46df3d1ff2, type: 3}
+  gameOverVolume: 1
 --- !u!114 &2200000012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -50444,6 +50465,7 @@ MonoBehaviour:
   lightningPotions: 0
   healPotions: 0
   curePotions: 0
+  hasShieldItem: 0
 --- !u!114 &2200000014
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -50482,9 +50504,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67c022c8b1473884da26865c36357201, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  message: "B\u1EA1n \u0111\xE3 b\u1ECB nhi\u1EC5m \u0111\u1ED9c nh\u1EB9 sau tr\u1EADn
-    chi\u1EBFn \u1EDF Level 1.\nH\xE3y \u0111\xE1nh h\u1EA1 Boss \u0111\u1EC3 l\u1EA5y
-    b\xECnh thu\u1ED1c gi\u1EA3i \u0111\u1ED9c."
+  message: 'You''ve been mildly poisoned after the battle at Level 1.
+
+    Defeat
+    the Boss to get the antidote.'
   minDisplayTime: 1.5
   autoHideAfter: 6
   panelWidth: 640
@@ -50493,6 +50516,55 @@ MonoBehaviour:
   panelTexture: {fileID: 2800000, guid: c5417b7d3f0388946a9d79524acea7e5, type: 3}
   backgroundColor: {r: 0.08, g: 0.08, b: 0.08, a: 0.9}
   textColor: {r: 0.95, g: 0.35, b: 0.2, a: 1}
+--- !u!114 &2200000017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f89e7cf0e2c610548ab9b29d4ca0cb5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  musicClip: {fileID: 8300000, guid: 091c772004f10934c8f9fe4ad340ec2d, type: 3}
+  volume: 0.2
+--- !u!114 &2200000018
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec91f2f76d3b43840b05548d248f3e02, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  smallRadius: 160
+  largeRadius: 260
+  firePotionThreshold: 10
+  innerFraction: 0.16
+  edgeSoftness: 0.06
+--- !u!114 &2200000019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfc800898de28d348bfbe88d7fb56ec3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  shieldDuration: 20
+  shieldCooldown: 30
+  shieldVisualPrefab: {fileID: 6460924532978862756, guid: ba8bb162f55fded4ca9cad86383bf9fe, type: 3}
+  shieldVisualLocalOffset: {x: 0, y: 0, z: 0}
+  activateSound: {fileID: 8300000, guid: 7d094e08f734df8449835606f1a7eb3a, type: 3}
+  activateVolume: 1
 --- !u!1001 &596561813377073503
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -50621,6 +50693,5 @@ SceneRoots:
   - {fileID: 549581783}
   - {fileID: 829954394}
   - {fileID: 133914926}
-  - {fileID: 1541976588}
   - {fileID: 1494858432}
   - {fileID: 861044402}

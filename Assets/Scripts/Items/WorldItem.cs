@@ -18,6 +18,7 @@ public class WorldItem : MonoBehaviour
 
     [Header("Âm thanh")]
     public AudioClip collectSound;
+    [Range(0f, 1f)] public float collectVolume = 1f;
 
     Vector3 basePos;
     SpriteRenderer spriteRenderer;
@@ -50,7 +51,7 @@ public class WorldItem : MonoBehaviour
     {
         quantity = Quantity;
         var data = itemData;
-        AudioOneShot.Play(collectSound, transform.position);
+        AudioOneShot.Play(collectSound, transform.position, collectVolume);
         Destroy(gameObject);
         return data;
     }

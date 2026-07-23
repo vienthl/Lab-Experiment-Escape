@@ -3,14 +3,15 @@ using System.Collections;
 using UnityEngine;
 
 // Máu + chết cho Boss2 (Level 2). Tương tự BossHealth cũ của Mr.X nhưng viết lại mới:
-// - Ở mốc 50% máu, kích hoạt hiệu ứng tối màn hình quanh Player (VisionLimiter) đúng 1 lần.
+// - Ở mốc 50% máu, phát 1 tiếng "sting" báo hiệu bước sang giai đoạn nguy hiểm (vùng tối màn hình
+//   giờ do VisionLimiter.cs tự quản lý theo số bình lửa của Player, không còn phụ thuộc máu boss).
 // - Khi chết, NẾU lockdown phòng vẫn còn thời gian (chưa hết giờ) thì rơi bình "cure" cho Player nhặt.
 public class Boss2Health : MonoBehaviour
 {
     [Header("Máu")]
     public float maxHealth = 400f;
 
-    [Header("Hiệu ứng tối màn hình khi máu ≤ 50%")]
+    [Header("Mốc máu thấp báo hiệu (chỉ còn phát âm thanh, không còn điều khiển vùng tối)")]
     [Range(0f, 1f)]
     public float visionLimitThreshold = 0.5f;
 
@@ -27,9 +28,12 @@ public class Boss2Health : MonoBehaviour
 
     [Header("Âm thanh")]
     public AudioClip hitSound;
+    [Range(0f, 1f)] public float hitVolume = 1f;
     public AudioClip deathSound;
+    [Range(0f, 1f)] public float deathVolume = 1f;
     [Tooltip("Phát 1 lần khi máu xuống mốc kích hoạt vùng tối (vd sting/gầm báo hiệu đổi pha)")]
     public AudioClip visionTriggerSound;
+    [Range(0f, 1f)] public float visionTriggerVolume = 1f;
 
     float currentHealth;
     bool visionLimitTriggered;
@@ -51,14 +55,15 @@ public class Boss2Health : MonoBehaviour
         if (IsDead || amount <= 0f) return;
 
         currentHealth = Mathf.Max(0f, currentHealth - amount);
-        AudioOneShot.Play(hitSound, transform.position);
+        AudioOneShot.Play(hitSound, transform.position, hitVolume);
         OnDamaged?.Invoke(this);
 
+        // Vùng tối giờ luôn bật sẵn (theo số bình lửa của Player, xem VisionLimiter.cs) —
+        // ở đây chỉ còn giữ lại tiếng "sting" báo hiệu boss bước sang giai đoạn máu thấp.
         if (!visionLimitTriggered && HealthPercent <= visionLimitThreshold)
         {
             visionLimitTriggered = true;
-            VisionLimiter.Instance?.Activate();
-            AudioOneShot.Play(visionTriggerSound, transform.position);
+            AudioOneShot.Play(visionTriggerSound, transform.position, visionTriggerVolume);
         }
 
         if (IsDead) Die();
@@ -66,7 +71,8 @@ public class Boss2Health : MonoBehaviour
 
     void Die()
     {
-        AudioOneShot.Play(deathSound, transform.position);
+        GameManager.Instance?.AddScore(70);
+        AudioOneShot.Play(deathSound, transform.position, deathVolume);
         OnDied?.Invoke(this);
 
         if (curePotionPrefab != null && ShouldDropCure())

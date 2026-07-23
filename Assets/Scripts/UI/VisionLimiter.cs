@@ -1,58 +1,65 @@
 using UnityEngine;
 
-// Hiệu ứng "vùng tối" kiểu Among Us: màn hình tối đen, chỉ sáng 1 vùng tròn quanh Player.
-// Boss2Health gọi VisionLimiter.Instance.Activate() khi máu boss xuống mốc quy định (mặc định 50%).
-// Đặt script này lên 1 GameObject có sẵn trong scene Level2 (vd chính GameObject đang giữ LevelHUD).
+// Hiệu ứng "vùng tối" kiểu Among Us: màn hình tối đen TUYỆT ĐỐI ngoài 1 vùng tròn quanh Player
+// (biên cứng, không mờ dần như sương mù — ra khỏi bán kính là tối đen ngay).
+// Luôn bật liên tục (không cần Activate() từ bên ngoài) — bán kính vùng sáng tự tăng khi Player
+// có đủ bình lửa trong túi đồ (đại diện cho có đèn/lửa soi sáng), nhỏ lại khi chưa đủ.
+// Gắn trực tiếp lên GameObject Player (script tự tìm PlayerInventory trên chính nó).
+[RequireComponent(typeof(PlayerInventory))]
 public class VisionLimiter : MonoBehaviour
 {
     public static VisionLimiter Instance { get; private set; }
 
-    [Header("Bán kính vùng sáng quanh Player (pixel màn hình)")]
-    public float visionRadius = 160f;
+    [Header("Bán kính vùng sáng (pixel màn hình)")]
+    [Tooltip("Bán kính khi CHƯA đủ bình lửa")]
+    public float smallRadius = 160f;
+    [Tooltip("Bán kính khi ĐÃ đủ bình lửa (>= Fire Potion Threshold)")]
+    public float largeRadius = 260f;
+    [Tooltip("Số bình lửa tối thiểu để có vùng sáng lớn hơn")]
+    public int firePotionThreshold = 10;
 
     [Range(0.05f, 0.9f)]
-    [Tooltip("Tỉ lệ (so với bán kính vùng sáng) nơi bắt đầu mờ dần sang tối hẳn")]
+    [Tooltip("Tỉ lệ nội bộ dùng để tính kích thước texture — càng lớn thì hình tròn càng mượt (ít răng cưa)")]
     public float innerFraction = 0.1f;
+
+    [Range(0f, 0.15f)]
+    [Tooltip("Độ mềm CHỈ ở sát viền tròn (dải rất mỏng, chống răng cưa) — 0 = cắt cứng tuyệt đối. KHÔNG phải hiệu ứng sương mù rộng như bản cũ, phần tối xung quanh vẫn đen 100%")]
+    public float edgeSoftness = 0.03f;
 
     const int TexSize = 512;
 
     Texture2D maskTex;
-    Transform player;
-    bool active;
+    PlayerInventory inventory;
+
+    float CurrentRadius => (inventory != null && inventory.firePotions >= firePotionThreshold) ? largeRadius : smallRadius;
 
     void Awake()
     {
         Instance = this;
+        inventory = GetComponent<PlayerInventory>();
+        BuildMask();
     }
 
-    void Start()
-    {
-        var playerGo = GameObject.FindGameObjectWithTag("Player");
-        if (playerGo != null) player = playerGo.transform;
-    }
-
-    public void Activate()
-    {
-        if (active) return;
-        active = true;
-        if (maskTex == null) BuildMask();
-    }
-
-    public void Deactivate() => active = false;
-
+    // Biên gần như cứng kiểu Among Us: trong bán kính thì sáng hoàn toàn (alpha 0), ra khỏi 1 dải
+    // rất mỏng (Edge Softness) là tối đen tuyệt đối (alpha 1) — khác bản mờ-sương-mù cũ ở chỗ dải
+    // chuyển màu chỉ rộng vài % thay vì trải dài tới tận mép texture.
     void BuildMask()
     {
         maskTex = new Texture2D(TexSize, TexSize, TextureFormat.ARGB32, false);
+        maskTex.filterMode = FilterMode.Bilinear;
         Vector2 center = new Vector2(TexSize / 2f, TexSize / 2f);
         float outerR = TexSize / 2f;
-        float innerR = outerR * innerFraction;
+        float holeR = outerR * innerFraction;
+        float edgeR = holeR + outerR * edgeSoftness;
 
         for (int y = 0; y < TexSize; y++)
         {
             for (int x = 0; x < TexSize; x++)
             {
                 float dist = Vector2.Distance(new Vector2(x, y), center);
-                float alpha = Mathf.Clamp01(Mathf.InverseLerp(innerR, outerR, dist));
+                float alpha = edgeSoftness > 0f
+                    ? Mathf.Clamp01(Mathf.InverseLerp(holeR, edgeR, dist))
+                    : (dist <= holeR ? 0f : 1f);
                 maskTex.SetPixel(x, y, new Color(0f, 0f, 0f, alpha));
             }
         }
@@ -61,18 +68,20 @@ public class VisionLimiter : MonoBehaviour
 
     void OnGUI()
     {
-        if (!active || player == null || maskTex == null || Time.timeScale <= 0f) return;
+        if (maskTex == null || Time.timeScale <= 0f) return;
 
         var cam = Camera.main;
         if (cam == null) return;
 
-        Vector3 sp = cam.WorldToScreenPoint(player.position);
+        Vector3 sp = cam.WorldToScreenPoint(transform.position);
         float guiY = Screen.height - sp.y;
 
-        // coverSize suy ra từ visionRadius/innerFraction để hình tròn sáng luôn đúng bán kính mong muốn,
+        float radius = CurrentRadius;
+
+        // coverSize suy ra từ radius/innerFraction để hình tròn sáng luôn đúng bán kính mong muốn,
         // đồng thời đảm bảo phủ hết góc màn hình xa nhất.
         float coverSize = Mathf.Max(
-            visionRadius * 2f / innerFraction,
+            radius * 2f / innerFraction,
             Mathf.Max(Screen.width, Screen.height) * 2.5f);
 
         // Depth cao hơn (mặc định 0) → vẽ Ở DƯỚI, để các HUD khác (máu, đồng hồ...) vẫn hiện trên vùng tối.

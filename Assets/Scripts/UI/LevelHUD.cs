@@ -39,13 +39,19 @@ public class LevelHUD : MonoBehaviour
         warningStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 16, fontStyle = FontStyle.Bold, normal = { textColor = warningColor } };
 
         bool showInfected = infection != null && infection.IsInfected;
-        int lineCount = 1 + (showInfected ? 1 : 0) + (lockdown != null && !lockdown.IsCleared ? 2 : 0);
+        int lineCount = 2 + (showInfected ? 1 : 0) + (lockdown != null && !lockdown.IsCleared ? 2 : 0);
         float lineHeight = 22f;
         float panelHeight = lineCount * lineHeight + 10f;
 
         GUI.DrawTexture(new Rect(panelX, panelY, panelWidth, panelHeight), bgTex);
 
         float y = panelY + 5f;
+        int score = GameManager.Instance != null ? GameManager.Instance.SavedData.score : 0;
+        GUI.Label(new Rect(panelX + 8f, y, panelWidth - 16f, lineHeight),
+            $"Điểm: {score}",
+            textStyle);
+
+        y += lineHeight;
         GUI.Label(new Rect(panelX + 8f, y, panelWidth - 16f, lineHeight),
             $"Lửa: {inventory.firePotions}   Điện: {inventory.lightningPotions}   Hồi máu: {inventory.healPotions}   Cure: {inventory.curePotions}",
             textStyle);
@@ -54,7 +60,7 @@ public class LevelHUD : MonoBehaviour
         {
             y += lineHeight;
             GUI.Label(new Rect(panelX + 8f, y, panelWidth - 16f, lineHeight),
-                "NHIỄM ĐỘC (bấm C để chữa)",
+                "NHIỄM ĐỘC (bấm E để chữa)",
                 warningStyle);
         }
 

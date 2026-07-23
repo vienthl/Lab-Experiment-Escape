@@ -11,6 +11,8 @@ public class LockdownRoomController : MonoBehaviour
     {
         public EnemyHealth[] enemies;
         public Boss2Health[] bosses;
+        [Tooltip("Boss kiểu cũ (MrX ở Level1) — dùng class BossHealth riêng, khác Boss2Health của Level2")]
+        public BossHealth[] mrXBosses;
     }
 
     [Header("Cửa bị khóa cho tới khi xong")]
@@ -36,8 +38,11 @@ public class LockdownRoomController : MonoBehaviour
 
     [Header("Âm thanh")]
     public AudioClip waveStartSound;
+    [Range(0f, 1f)] public float waveStartVolume = 1f;
     public AudioClip allClearSound;
+    [Range(0f, 1f)] public float allClearVolume = 1f;
     public AudioClip timeExpiredSound;
+    [Range(0f, 1f)] public float timeExpiredVolume = 1f;
 
     int currentWaveIndex = -1;
     int aliveInCurrentWave;
@@ -71,6 +76,12 @@ public class LockdownRoomController : MonoBehaviour
                     foreach (var boss in wave.bosses)
                         if (boss != null) boss.gameObject.SetActive(false);
                 }
+
+                if (wave?.mrXBosses != null)
+                {
+                    foreach (var boss in wave.mrXBosses)
+                        if (boss != null) boss.gameObject.SetActive(false);
+                }
             }
         }
 
@@ -87,7 +98,7 @@ public class LockdownRoomController : MonoBehaviour
         {
             remainingTime = 0f;
             timeExpiredFired = true;
-            AudioOneShot.Play(timeExpiredSound, transform.position);
+            AudioOneShot.Play(timeExpiredSound, transform.position, timeExpiredVolume);
             onTimeExpired?.Invoke();
 
             if (!string.IsNullOrEmpty(sceneOnTimeExpired))
@@ -154,11 +165,23 @@ public class LockdownRoomController : MonoBehaviour
             }
         }
 
+        if (wave?.mrXBosses != null)
+        {
+            foreach (var boss in wave.mrXBosses)
+            {
+                if (boss == null) continue;
+
+                boss.gameObject.SetActive(true);
+                boss.OnDied += HandleMrXBossDied;
+                aliveInCurrentWave++;
+            }
+        }
+
         // Wave rỗng (designer để trống) — coi như xong ngay, qua wave kế.
         if (aliveInCurrentWave == 0)
             ActivateNextWave();
         else
-            AudioOneShot.Play(waveStartSound, transform.position);
+            AudioOneShot.Play(waveStartSound, transform.position, waveStartVolume);
     }
 
     void HandleEnemyDied(EnemyHealth enemy)
@@ -179,6 +202,15 @@ public class LockdownRoomController : MonoBehaviour
             ActivateNextWave();
     }
 
+    void HandleMrXBossDied(BossHealth boss)
+    {
+        boss.OnDied -= HandleMrXBossDied;
+        aliveInCurrentWave--;
+
+        if (aliveInCurrentWave <= 0)
+            ActivateNextWave();
+    }
+
     void Finish()
     {
         finished = true;
@@ -188,7 +220,7 @@ public class LockdownRoomController : MonoBehaviour
             if (door != null) door.SetLocked(false);
         }
 
-        AudioOneShot.Play(allClearSound, transform.position);
+        AudioOneShot.Play(allClearSound, transform.position, allClearVolume);
         onAllWavesCleared?.Invoke();
     }
 }

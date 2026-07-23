@@ -13,6 +13,7 @@ public class GameOverUI : MonoBehaviour
 
     [Header("Âm thanh")]
     public AudioClip gameOverSound;
+    [Range(0f, 1f)] public float gameOverVolume = 1f;
 
     PlayerHealth playerHealth;
     Texture2D    overlayTex;
@@ -36,7 +37,7 @@ public class GameOverUI : MonoBehaviour
         {
             isDead = true;
             diedAt = Time.time;
-            AudioOneShot.Play(gameOverSound, transform.position);
+            AudioOneShot.Play(gameOverSound, transform.position, gameOverVolume);
         }
 
         if (isDead && IsVisible() && Input.GetKeyDown(KeyCode.R))

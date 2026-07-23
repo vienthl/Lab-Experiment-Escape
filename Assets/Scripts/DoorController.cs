@@ -8,7 +8,9 @@ public class DoorController : MonoBehaviour
 
     [Header("Âm thanh")]
     public AudioClip openSound;
+    [Range(0f, 1f)] public float openVolume = 1f;
     public AudioClip closeSound;
+    [Range(0f, 1f)] public float closeVolume = 1f;
 
     Animator animator;
     bool isOpen;
@@ -38,7 +40,7 @@ public class DoorController : MonoBehaviour
         // thì lập tức bị tiêu thụ, khiến cửa vừa mở đã tự đóng lại ngay.
         animator.ResetTrigger("Close");
         animator.SetTrigger("Open");
-        AudioOneShot.Play(openSound, transform.position);
+        AudioOneShot.Play(openSound, transform.position, openVolume);
 
         if (blockCollider != null) blockCollider.enabled = false;
     }
@@ -55,7 +57,7 @@ public class DoorController : MonoBehaviour
         // Chỉ phát tiếng khi đây là 1 lần đóng THẬT (lockdown/gameplay), không phải lần
         // tự đóng ban đầu ở Start() lúc mới vào scene.
         if (hasStarted)
-            AudioOneShot.Play(closeSound, transform.position);
+            AudioOneShot.Play(closeSound, transform.position, closeVolume);
     }
 
     // API rõ nghĩa cho hệ lockdown/khóa theo điều kiện (LockdownRoomController, keycard...)

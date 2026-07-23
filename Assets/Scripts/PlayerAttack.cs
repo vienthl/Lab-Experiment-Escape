@@ -22,6 +22,7 @@ public class PlayerAttack : MonoBehaviour
 
     [Header("Âm thanh")]
     public AudioClip throwSound;
+    [Range(0f, 1f)] public float throwVolume = 1f;
 
     PlayerMovement movement;
     PlayerHealth   health;
@@ -62,6 +63,10 @@ public class PlayerAttack : MonoBehaviour
             return;
         }
 
+        // Trừ điểm mỗi lần ném (dù trúng hay trượt) — buộc người chơi cân nhắc, hạn chế ném hụt vô tội vạ.
+        int scoreCost = ammoType == ItemType.LightningPotion ? 2 : 1;
+        GameManager.Instance?.AddScore(-scoreCost);
+
         Throw(prefab);
     }
 
@@ -87,7 +92,7 @@ public class PlayerAttack : MonoBehaviour
 
         go.GetComponent<Projectile>()?.Launch(dir, projectileSpeed);
         movement?.TriggerThrow(dir);
-        AudioOneShot.Play(throwSound, transform.position);
+        AudioOneShot.Play(throwSound, transform.position, throwVolume);
         lastThrowTime = Time.time;
     }
 }

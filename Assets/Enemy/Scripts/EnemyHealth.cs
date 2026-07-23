@@ -33,7 +33,9 @@ public class EnemyHealth : MonoBehaviour
 
     [Header("Âm thanh")]
     public AudioClip hitSound;
+    [Range(0f, 1f)] public float hitVolume = 1f;
     public AudioClip deathSound;
+    [Range(0f, 1f)] public float deathVolume = 1f;
 
     [Header("Hồi máu Player khi diệt được quái này")]
     [Range(0f, 1f)]
@@ -100,7 +102,7 @@ public class EnemyHealth : MonoBehaviour
 
         currentHealth = Mathf.Max(0f, currentHealth - amount);
         RefreshBar();
-        AudioOneShot.Play(hitSound, transform.position);
+        AudioOneShot.Play(hitSound, transform.position, hitVolume);
         OnDamaged?.Invoke(this);
 
         if (IsDead) Die();
@@ -122,7 +124,8 @@ public class EnemyHealth : MonoBehaviour
 
     void Die()
     {
-        AudioOneShot.Play(deathSound, transform.position);
+        GameManager.Instance?.AddScore(10);
+        AudioOneShot.Play(deathSound, transform.position, deathVolume);
         OnDied?.Invoke(this);
 
         if (healPlayerOnKillPercent > 0f)

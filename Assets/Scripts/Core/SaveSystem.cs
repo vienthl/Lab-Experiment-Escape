@@ -17,6 +17,8 @@ public static class SaveSystem
         public int healPotions;
         public int curePotions;
         public bool isInfected;
+        public int score;
+        public bool hasShieldItem;
 
         // Máu Player lúc hoàn thành level gần nhất. -1 = chưa từng lưu (level đầu tiên) → PlayerHealth tự dùng maxHealth.
         public float currentHealth = -1f;

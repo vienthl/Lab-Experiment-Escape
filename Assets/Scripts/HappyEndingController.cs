@@ -16,7 +16,9 @@ public class HappyEndingController : MonoBehaviour
     [SerializeField] AudioClip endingMusic;
     [SerializeField, Range(0f, 1f)] float musicVolume = 0.55f;
     [SerializeField] AudioClip typewriterBeep;
+    [SerializeField, Range(0f, 1f)] float typewriterBeepVolume = 0.5f;
     [SerializeField] AudioClip panelTransitionSound;
+    [SerializeField, Range(0f, 1f)] float panelTransitionVolume = 1f;
 
     [Header("Ảnh nền camera an ninh (để trống = dùng nền màu)")]
     [SerializeField] Sprite statusBackdrop;
@@ -234,7 +236,7 @@ public class HappyEndingController : MonoBehaviour
     {
         isTransitioning = true;
         flashOverlay.color = new Color(mint.r, mint.g, mint.b, 0.08f);
-        AudioOneShot.Play(panelTransitionSound, transform.position);
+        AudioOneShot.Play(panelTransitionSound, transform.position, panelTransitionVolume);
         yield return Fade(panels[currentPanel], 1f, 0f, 0.18f);
 
         currentPanel = nextPanel;
@@ -278,7 +280,7 @@ public class HappyEndingController : MonoBehaviour
 
             char c = fullText[i];
             if (!char.IsWhiteSpace(c))
-                AudioOneShot.Play(typewriterBeep, transform.position, 0.5f);
+                AudioOneShot.Play(typewriterBeep, transform.position, typewriterBeepVolume);
 
             float delay = baseDelay;
             if (c == '\n') delay += 0.25f;

@@ -97,6 +97,13 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene("MainMenu");
     }
 
+    // Cộng/trừ điểm — gọi từ EnemyHealth/BossHealth/Boss2Health (giết) và PlayerAttack (ném bình).
+    // Không cho điểm xuống âm để HUD không hiện số âm khó nhìn.
+    public void AddScore(int amount)
+    {
+        SavedData.score = Mathf.Max(0, SavedData.score + amount);
+    }
+
     // Xóa hẳn tiến trình đã lưu (máu, số bình, nhiễm độc, keycard...) về mặc định.
     // Gọi khi player chết (NotifyPlayerDied) hoặc lúc Intro chạy lại từ đầu (New Game thật sự).
     public void ResetProgress()
@@ -127,6 +134,7 @@ public class GameManager : MonoBehaviour
             SavedData.lightningPotions = inventory.lightningPotions;
             SavedData.healPotions = inventory.healPotions;
             SavedData.curePotions = inventory.curePotions;
+            SavedData.hasShieldItem = inventory.hasShieldItem;
             SavedData.keyIds = new List<string>(inventory.KeyIds);
         }
 

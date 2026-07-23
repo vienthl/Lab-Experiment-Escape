@@ -7,7 +7,15 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Âm thanh")]
     public AudioClip drinkSound;
+    [Range(0f, 1f)] public float drinkVolume = 1f;
     public AudioClip pickUpSound;
+    [Range(0f, 1f)] public float pickUpVolume = 1f;
+
+    [Header("Âm thanh bước chân (loop khi đang di chuyển, tắt ngay khi dừng)")]
+    [Tooltip("1 clip liên tục (vd 6 giây) — tự Play() khi bắt đầu đi, tự Stop() ngay khi dừng, không cắt nhịp giữa chừng")]
+    public AudioClip footstepLoop;
+    [Range(0f, 1f)]
+    public float footstepVolume = 0.6f;
 
     // DRINK
     public float drinkDuration = 0.8f;
@@ -29,6 +37,7 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 movement;
     private Vector2 lastMoveDirection = Vector2.down;
     private Vector2 knockbackVelocity;
+    private AudioSource footstepSource;
 
     // ACTION STATE
     private bool isDrinking = false;
@@ -53,6 +62,21 @@ public class PlayerMovement : MonoBehaviour
         animator = GetComponent<Animator>();
         interactor = GetComponent<PlayerInteractor>();
         infection = GetComponent<PlayerInfection>();
+
+        if (footstepLoop != null)
+        {
+            footstepSource = gameObject.AddComponent<AudioSource>();
+            footstepSource.clip = footstepLoop;
+            footstepSource.volume = footstepVolume;
+            footstepSource.loop = true;
+            footstepSource.playOnAwake = false;
+        }
+    }
+
+    void StopFootsteps()
+    {
+        if (footstepSource != null && footstepSource.isPlaying)
+            footstepSource.Stop();
     }
 
     void Update()
@@ -62,6 +86,7 @@ public class PlayerMovement : MonoBehaviour
         if (isDead)
         {
             movement = Vector2.zero;
+            StopFootsteps();
 
             animator.SetFloat("MoveX", 0);
             animator.SetFloat("MoveY", 0);
@@ -76,6 +101,7 @@ public class PlayerMovement : MonoBehaviour
         if (isDrinking || isPickingUp)
         {
             movement = Vector2.zero;
+            StopFootsteps();
 
             animator.SetFloat("MoveX", 0);
             animator.SetFloat("MoveY", 0);
@@ -102,6 +128,15 @@ public class PlayerMovement : MonoBehaviour
         animator.SetFloat("MoveX", movement.x);
         animator.SetFloat("MoveY", movement.y);
         animator.SetFloat("Speed", movement.sqrMagnitude);
+
+        // FOOTSTEP — loop nguyên clip trong lúc di chuyển, dừng ngay khi đứng yên (không cắt giữa chừng)
+        if (footstepSource != null)
+        {
+            if (movement != Vector2.zero && !footstepSource.isPlaying)
+                footstepSource.Play();
+            else if (movement == Vector2.zero && footstepSource.isPlaying)
+                footstepSource.Stop();
+        }
 
         // Khi đang ném: GIỮ hướng mặt về phía ném (đã set ở TriggerThrow),
         // không cho hướng di chuyển ghi đè → animation ném không đổi hướng giữa chừng
@@ -206,7 +241,7 @@ public class PlayerMovement : MonoBehaviour
             animator.SetFloat("LastMoveY", lastMoveDirection.y);
 
             animator.SetTrigger("Drink");
-            AudioOneShot.Play(drinkSound, transform.position);
+            AudioOneShot.Play(drinkSound, transform.position, drinkVolume);
 
             yield return new WaitForSeconds(drinkDuration);
         }
@@ -234,7 +269,7 @@ public class PlayerMovement : MonoBehaviour
             animator.SetFloat("LastMoveY", lastMoveDirection.y);
 
             animator.SetTrigger("Drink");
-            AudioOneShot.Play(drinkSound, transform.position);
+            AudioOneShot.Play(drinkSound, transform.position, drinkVolume);
 
             yield return new WaitForSeconds(drinkDuration);
 
@@ -266,7 +301,7 @@ public class PlayerMovement : MonoBehaviour
             yield return new WaitForSeconds(pickUpDuration);
 
             interactor?.Interact();
-            AudioOneShot.Play(pickUpSound, transform.position);
+            AudioOneShot.Play(pickUpSound, transform.position, pickUpVolume);
         }
         finally
         {

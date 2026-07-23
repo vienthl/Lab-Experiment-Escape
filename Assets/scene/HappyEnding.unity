@@ -247,8 +247,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mainMenuScene: MainMenu
   skipDelay: 0.5
-  endingMusic: {fileID: 0}
+  endingMusic: {fileID: 8300000, guid: c44889418bfd0924d9f918a0735f311f, type: 3}
   musicVolume: 0.55
+  typewriterBeep: {fileID: 8300000, guid: 7f8cfd55188501445bcf79a755ab0692, type: 3}
+  panelTransitionSound: {fileID: 0}
   statusBackdrop: {fileID: 21300000, guid: 75c54c3058bf2cd4a8822de855c0749a, type: 3}
   epilogueBackdrop: {fileID: 21300000, guid: 5ef80c92d878aca4ca5a2c5f216be67a, type: 3}
   titleBackdrop: {fileID: 21300000, guid: 2930dcbcc14986f4eb710c00872972f8, type: 3}

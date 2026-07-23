@@ -16,6 +16,7 @@ public class Projectile : MonoBehaviour
 
     [Header("Âm thanh khi trúng đích")]
     public AudioClip impactSound;
+    [Range(0f, 1f)] public float impactVolume = 1f;
 
     Rigidbody2D rb;
     Vector2 startPos;
@@ -67,10 +68,21 @@ public class Projectile : MonoBehaviour
             boss.TakeDamage(dmg);
         }
 
+        // MrX (Level1) — class BossHealth riêng, cùng công thức % như Boss2
+        var mrX = other.GetComponentInParent<BossHealth>();
+        if (mrX != null && !mrX.IsDead)
+        {
+            float dmg = potionType == PotionType.Lightning
+                ? mrX.MaxHealth * 0.1f
+                : mrX.MaxHealth * 0.05f;
+
+            mrX.TakeDamage(dmg);
+        }
+
         if (hitEffectPrefab != null)
             Instantiate(hitEffectPrefab, transform.position, Quaternion.identity);
 
-        AudioOneShot.Play(impactSound, transform.position);
+        AudioOneShot.Play(impactSound, transform.position, impactVolume);
 
         Destroy(gameObject);
     }
